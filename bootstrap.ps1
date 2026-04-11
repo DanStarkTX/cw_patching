@@ -32,12 +32,11 @@ Write-Host "=== Cloudwave EUC Patching Bootstrap ===" -ForegroundColor Cyan
 Write-Host "Staging payload to C:\cwave..." -ForegroundColor Yellow
 Write-Host ""
 
-foreach ($dir in @($outDir, $scriptOutDir, $functionsOutDir, $configOutDir, $modulesOutDir)) {
-    [string]$d = $dir
-    if (-not (Test-Path -LiteralPath $d)) {
-        New-Item -ItemType Directory -Path $d -Force | Out-Null
-    }
-}
+if (-not (Test-Path -LiteralPath $outDir))         { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
+if (-not (Test-Path -LiteralPath $scriptOutDir))    { New-Item -ItemType Directory -Path $scriptOutDir -Force | Out-Null }
+if (-not (Test-Path -LiteralPath $functionsOutDir)) { New-Item -ItemType Directory -Path $functionsOutDir -Force | Out-Null }
+if (-not (Test-Path -LiteralPath $configOutDir))    { New-Item -ItemType Directory -Path $configOutDir -Force | Out-Null }
+if (-not (Test-Path -LiteralPath $modulesOutDir))   { New-Item -ItemType Directory -Path $modulesOutDir -Force | Out-Null }
 
 function Get-RepoItems {
     param ([string]$Path = "")
