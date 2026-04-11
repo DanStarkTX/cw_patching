@@ -9,6 +9,7 @@ Run as Administrator from Windows PowerShell 5.1.
 
 .NOTES
 Author: Dan Stark / Cloudwave EUC
+For questions, contact Dan Stark / Cloudwave EUC
 #>
 
 if ($PSVersionTable.PSEdition -ne "Desktop") {
@@ -19,13 +20,12 @@ if ($PSVersionTable.PSEdition -ne "Desktop") {
 }
 
 $ErrorActionPreference = "Stop"
-$repoBase = "https://raw.githubusercontent.com/DanStarkTX/cw_patching/main"
 $apiBase = "https://api.github.com/repos/DanStarkTX/cw_patching/contents"
-$outDir = "C:\cwave"
-$scriptOutDir = Join-Path $outDir "scripts"
-$functionsOutDir = Join-Path $scriptOutDir "functions"
-$configOutDir = Join-Path $scriptOutDir "config"
-$modulesOutDir = Join-Path $scriptOutDir "modules"
+$outDir         = "C:\cwave"
+$scriptOutDir   = "$outDir\scripts"
+$functionsOutDir = "$outDir\scripts\functions"
+$configOutDir   = "$outDir\scripts\config"
+$modulesOutDir  = "$outDir\scripts\modules"
 
 Write-Host ""
 Write-Host "=== Cloudwave EUC Patching Bootstrap ===" -ForegroundColor Cyan
@@ -33,17 +33,18 @@ Write-Host "Staging payload to $outDir..." -ForegroundColor Yellow
 Write-Host ""
 
 foreach ($dir in @($outDir, $scriptOutDir, $functionsOutDir, $configOutDir, $modulesOutDir)) {
-    if (-not (Test-Path $dir)) {
+    if (-not (Test-Path -LiteralPath $dir)) {
         New-Item -ItemType Directory -Path $dir -Force | Out-Null
     }
 }
 
-function Get-RepoFiles {
+function Get-RepoItems {
     param ([string] $Path)
+    $uri = if ($Path) { "$apiBase/$Path" } else { $apiBase }
     try {
-        @(Invoke-RestMethod -Uri "$apiBase/$Path" -ErrorAction Stop)
+        @(Invoke-RestMethod -Uri $uri -UseBasicParsing -ErrorAction Stop)
     } catch {
-        Write-Host "Failed to query $Path. Error: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "Failed to query '$Path'. Error: $($_.Exception.Message)" -ForegroundColor Red
         @()
     }
 }
@@ -51,7 +52,7 @@ function Get-RepoFiles {
 function Get-RepoFilesRecursive {
     param ([string] $Path)
     $results = @()
-    $items = @(Get-RepoFiles -Path $Path)
+    $items = @(Get-RepoItems -Path $Path)
     foreach ($item in $items) {
         if ($item.type -eq 'file' -and $item.download_url) {
             $results += $item
@@ -62,55 +63,73 @@ function Get-RepoFilesRecursive {
     return $results
 }
 
+function Save-RepoFile {
+    param ([string] $Url, [string] $OutPath)
+    $parent = Split-Path -Path $OutPath -Parent
+    if (-not (Test-Path -LiteralPath $parent)) {
+        New-Item -ItemType Directory -Path $parent -Force | Out-Null
+    }
+    Invoke-WebRequest -Uri $Url -OutFile $OutPath -UseBasicParsing
+}
+
 $updatedCount = 0
 
-$rootFiles = @(Get-RepoFiles -Path "" | Where-Object { $_.type -eq 'file' -and $_.name -match '\.bat$|\.ps1$' -and $_.name -ne 'bootstrap.ps1' })
-foreach ($file in $rootFiles) {
-    $outPath = Join-Path $outDir $file.name
-    Invoke-WebRequest -Uri $file.download_url -OutFile $outPath -UseBasicParsing
-    Write-Host "Staged: $($file.name)" -ForegroundColor Green
+# Root BAT files
+$rootItems = @(Get-RepoItems -Path "")
+foreach ($item in ($rootItems | Where-Object { $_.type -eq 'file' -and $_.name -match '\.bat$' -and $_.download_url })) {
+    $outPath = "$outDir\$($item.name)"
+    Save-RepoFile -Url $item.download_url -OutPath $outPath
+    Write-Host "Staged: $($item.name)" -ForegroundColor Green
     $updatedCount++
 }
 
-$scriptFiles = @(Get-RepoFiles -Path "scripts" | Where-Object { $_.type -eq 'file' -and $_.download_url })
-foreach ($file in $scriptFiles) {
-    $outPath = Join-Path $scriptOutDir $file.name
-    Invoke-WebRequest -Uri $file.download_url -OutFile $outPath -UseBasicParsing
-    Write-Host "Staged: scripts/$($file.name)" -ForegroundColor Green
+# Scripts (root ps1 files, not bootstrap)
+foreach ($item in ($rootItems | Where-Object { $_.type -eq 'file' -and $_.name -match '\.ps1$' -and $_.name -ne 'bootstrap.ps1' -and $_.download_url })) {
+    $outPath = "$outDir\$($item.name)"
+    Save-RepoFile -Url $item.download_url -OutPath $outPath
+    Write-Host "Staged: $($item.name)" -ForegroundColor Green
     $updatedCount++
 }
 
-$functionFiles = @(Get-RepoFiles -Path "scripts/functions" | Where-Object { $_.type -eq 'file' -and $_.download_url })
-foreach ($file in $functionFiles) {
-    $outPath = Join-Path $functionsOutDir $file.name
-    Invoke-WebRequest -Uri $file.download_url -OutFile $outPath -UseBasicParsing
-    Write-Host "Staged: scripts/functions/$($file.name)" -ForegroundColor Green
+# scripts/ folder PS1s
+$scriptItems = @(Get-RepoItems -Path "scripts" | Where-Object { $_.type -eq 'file' -and $_.download_url })
+foreach ($item in $scriptItems) {
+    $outPath = "$scriptOutDir\$($item.name)"
+    Save-RepoFile -Url $item.download_url -OutPath $outPath
+    Write-Host "Staged: scripts/$($item.name)" -ForegroundColor Green
     $updatedCount++
 }
 
-$configFiles = @(Get-RepoFiles -Path "scripts/config" | Where-Object { $_.type -eq 'file' -and $_.download_url })
-foreach ($file in $configFiles) {
-    $outPath = Join-Path $configOutDir $file.name
-    Invoke-WebRequest -Uri $file.download_url -OutFile $outPath -UseBasicParsing
-    Write-Host "Staged: scripts/config/$($file.name)" -ForegroundColor Green
+# functions/
+$functionItems = @(Get-RepoItems -Path "scripts/functions" | Where-Object { $_.type -eq 'file' -and $_.download_url })
+foreach ($item in $functionItems) {
+    $outPath = "$functionsOutDir\$($item.name)"
+    Save-RepoFile -Url $item.download_url -OutPath $outPath
+    Write-Host "Staged: scripts/functions/$($item.name)" -ForegroundColor Green
     $updatedCount++
 }
 
+# config/
+$configItems = @(Get-RepoItems -Path "scripts/config" | Where-Object { $_.type -eq 'file' -and $_.download_url })
+foreach ($item in $configItems) {
+    $outPath = "$configOutDir\$($item.name)"
+    Save-RepoFile -Url $item.download_url -OutPath $outPath
+    Write-Host "Staged: scripts/config/$($item.name)" -ForegroundColor Green
+    $updatedCount++
+}
+
+# modules/ recursive
 $moduleFiles = @(Get-RepoFilesRecursive -Path "scripts/modules" | Where-Object { $_.type -eq 'file' -and $_.download_url })
-foreach ($file in $moduleFiles) {
-    $relativePath = $file.path -replace '^scripts/modules/', ''
-    $outPath = Join-Path $modulesOutDir $relativePath
-    $outParent = Split-Path -Path $outPath -Parent
-    if (-not (Test-Path $outParent)) {
-        New-Item -ItemType Directory -Path $outParent -Force | Out-Null
-    }
-    Invoke-WebRequest -Uri $file.download_url -OutFile $outPath -UseBasicParsing
+foreach ($item in $moduleFiles) {
+    $relativePath = $item.path -replace '^scripts/modules/', ''
+    $outPath = "$modulesOutDir\$($relativePath -replace '/', '\')"
+    Save-RepoFile -Url $item.download_url -OutPath $outPath
     Write-Host "Staged: scripts/modules/$relativePath" -ForegroundColor Green
     $updatedCount++
 }
 
 Write-Host ""
-Write-Host "Bootstrap complete. $updatedCount file(s) staged to $outDir." -ForegroundColor Cyan
+Write-Host "Bootstrap complete. $updatedCount file(s) staged." -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  Run updates:  C:\cwave\run_updates.bat" -ForegroundColor White
