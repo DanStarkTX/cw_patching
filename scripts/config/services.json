@@ -1,0 +1,19 @@
+{
+  "protectedServices": [
+    "msiserver",
+    "TrustedInstaller"
+  ],
+  "servicesToDisable": [
+    "wuauserv",
+    "WaaSMedicSvc",
+    "UsoSvc",
+    "BITS",
+    "XblAuthManager",
+    "XblGameSave",
+    "XboxGipSvc",
+    "XboxNetApiSvc"
+  ],
+  "horizonServices": [
+    "vmlm"
+  ]
+}
