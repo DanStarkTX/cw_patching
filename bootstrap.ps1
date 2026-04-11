@@ -1,130 +1,94 @@
 <#
 .SYNOPSIS
 Cloudwave EUC patching toolkit bootstrap.
-
-.DESCRIPTION
-Stages the full patching payload under C:\cwave\scripts\ including
-scripts, helpers, config, and localized modules.
-Run as Administrator from Windows PowerShell 5.1.
-
-.NOTES
-Author: Dan Stark / Cloudwave EUC
 For questions, contact Dan Stark / Cloudwave EUC
 #>
 
 if ($PSVersionTable.PSEdition -ne "Desktop") {
-    Write-Host "This bootstrap must be run in Windows PowerShell 5.1." -ForegroundColor Red
-    Write-Host "Open Windows PowerShell (not PowerShell 7) and run:" -ForegroundColor Yellow
-    Write-Host "  irm 'https://raw.githubusercontent.com/DanStarkTX/cw_patching/main/bootstrap.ps1' | iex" -ForegroundColor Yellow
+    Write-Host "Run this from Windows PowerShell 5.1, not PowerShell 7." -ForegroundColor Red
     exit 1
 }
 
-[string]$ErrorActionPreference = "Stop"
-[string]$apiBase        = "https://api.github.com/repos/DanStarkTX/cw_patching/contents"
-[string]$outDir         = "C:\cwave"
-[string]$scriptOutDir   = "C:\cwave\scripts"
-[string]$functionsOutDir = "C:\cwave\scripts\functions"
-[string]$configOutDir   = "C:\cwave\scripts\config"
-[string]$modulesOutDir  = "C:\cwave\scripts\modules"
+$apiBase = "https://api.github.com/repos/DanStarkTX/cw_patching/contents"
 
 Write-Host ""
 Write-Host "=== Cloudwave EUC Patching Bootstrap ===" -ForegroundColor Cyan
 Write-Host "Staging payload to C:\cwave..." -ForegroundColor Yellow
 Write-Host ""
 
-if (-not (Test-Path -LiteralPath $outDir))         { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
-if (-not (Test-Path -LiteralPath $scriptOutDir))    { New-Item -ItemType Directory -Path $scriptOutDir -Force | Out-Null }
-if (-not (Test-Path -LiteralPath $functionsOutDir)) { New-Item -ItemType Directory -Path $functionsOutDir -Force | Out-Null }
-if (-not (Test-Path -LiteralPath $configOutDir))    { New-Item -ItemType Directory -Path $configOutDir -Force | Out-Null }
-if (-not (Test-Path -LiteralPath $modulesOutDir))   { New-Item -ItemType Directory -Path $modulesOutDir -Force | Out-Null }
+$null = cmd /c "mkdir C:\cwave 2>nul"
+$null = cmd /c "mkdir C:\cwave\scripts 2>nul"
+$null = cmd /c "mkdir C:\cwave\scripts\functions 2>nul"
+$null = cmd /c "mkdir C:\cwave\scripts\config 2>nul"
+$null = cmd /c "mkdir C:\cwave\scripts\modules 2>nul"
 
-function Get-RepoItems {
-    param ([string]$Path = "")
-    [string]$uri = if ($Path) { "$apiBase/$Path" } else { $apiBase }
-    try {
-        @(Invoke-RestMethod -Uri $uri -UseBasicParsing -ErrorAction Stop)
-    } catch {
-        Write-Host "Failed to query '$Path'. Error: $($_.Exception.Message)" -ForegroundColor Red
-        @()
+function cwGet {
+    param([string]$p)
+    if ($p) {
+        @(Invoke-RestMethod -Uri "$apiBase/$p" -UseBasicParsing)
+    } else {
+        @(Invoke-RestMethod -Uri $apiBase -UseBasicParsing)
     }
 }
 
-function Get-RepoFilesRecursive {
-    param ([string]$Path)
-    $results = [System.Collections.ArrayList]@()
-    $items = @(Get-RepoItems -Path $Path)
-    foreach ($item in $items) {
-        if ($item.type -eq 'file' -and $item.download_url) {
-            [void]$results.Add($item)
-        } elseif ($item.type -eq 'dir' -and $item.path) {
-            foreach ($child in @(Get-RepoFilesRecursive -Path $item.path)) {
-                [void]$results.Add($child)
-            }
-        }
+function cwGetRecurse {
+    param([string]$p)
+    $r = @()
+    foreach ($i in @(cwGet $p)) {
+        if ($i.type -eq 'file' -and $i.download_url) { $r += $i }
+        elseif ($i.type -eq 'dir') { $r += @(cwGetRecurse $i.path) }
     }
-    return $results
+    $r
 }
 
-function Save-RepoFile {
-    param ([string]$Url, [string]$OutPath)
-    [string]$parent = [System.IO.Path]::GetDirectoryName($OutPath)
-    if (-not (Test-Path -LiteralPath $parent)) {
-        New-Item -ItemType Directory -Path $parent -Force | Out-Null
-    }
-    Invoke-WebRequest -Uri $Url -OutFile $OutPath -UseBasicParsing
+function cwSave {
+    param([string]$url, [string]$out)
+    $par = [System.IO.Path]::GetDirectoryName($out)
+    $null = cmd /c "mkdir `"$par`" 2>nul"
+    Invoke-WebRequest -Uri $url -OutFile $out -UseBasicParsing
 }
 
-[int]$updatedCount = 0
+$n = 0
 
-$rootItems = @(Get-RepoItems -Path "")
-
-foreach ($item in @($rootItems | Where-Object { $_.type -eq 'file' -and $_.name -match '\.bat$' -and $_.download_url })) {
-    [string]$outPath = "C:\cwave\$($item.name)"
-    Save-RepoFile -Url ([string]$item.download_url) -OutPath $outPath
-    Write-Host "Staged: $($item.name)" -ForegroundColor Green
-    $updatedCount++
+foreach ($f in @(cwGet "" | Where-Object { $_.type -eq 'file' -and $_.name -match '\.bat$' -and $_.download_url })) {
+    cwSave $f.download_url "C:\cwave\$($f.name)"
+    Write-Host "Staged: $($f.name)" -ForegroundColor Green
+    $n++
 }
 
-foreach ($item in @($rootItems | Where-Object { $_.type -eq 'file' -and $_.name -match '\.ps1$' -and $_.name -ne 'bootstrap.ps1' -and $_.download_url })) {
-    [string]$outPath = "C:\cwave\$($item.name)"
-    Save-RepoFile -Url ([string]$item.download_url) -OutPath $outPath
-    Write-Host "Staged: $($item.name)" -ForegroundColor Green
-    $updatedCount++
+foreach ($f in @(cwGet "" | Where-Object { $_.type -eq 'file' -and $_.name -match '\.ps1$' -and $_.name -ne 'bootstrap.ps1' -and $_.download_url })) {
+    cwSave $f.download_url "C:\cwave\$($f.name)"
+    Write-Host "Staged: $($f.name)" -ForegroundColor Green
+    $n++
 }
 
-foreach ($item in @(Get-RepoItems -Path "scripts" | Where-Object { $_.type -eq 'file' -and $_.download_url })) {
-    [string]$outPath = "C:\cwave\scripts\$($item.name)"
-    Save-RepoFile -Url ([string]$item.download_url) -OutPath $outPath
-    Write-Host "Staged: scripts/$($item.name)" -ForegroundColor Green
-    $updatedCount++
+foreach ($f in @(cwGet "scripts" | Where-Object { $_.type -eq 'file' -and $_.download_url })) {
+    cwSave $f.download_url "C:\cwave\scripts\$($f.name)"
+    Write-Host "Staged: scripts/$($f.name)" -ForegroundColor Green
+    $n++
 }
 
-foreach ($item in @(Get-RepoItems -Path "scripts/functions" | Where-Object { $_.type -eq 'file' -and $_.download_url })) {
-    [string]$outPath = "C:\cwave\scripts\functions\$($item.name)"
-    Save-RepoFile -Url ([string]$item.download_url) -OutPath $outPath
-    Write-Host "Staged: scripts/functions/$($item.name)" -ForegroundColor Green
-    $updatedCount++
+foreach ($f in @(cwGet "scripts/functions" | Where-Object { $_.type -eq 'file' -and $_.download_url })) {
+    cwSave $f.download_url "C:\cwave\scripts\functions\$($f.name)"
+    Write-Host "Staged: scripts/functions/$($f.name)" -ForegroundColor Green
+    $n++
 }
 
-foreach ($item in @(Get-RepoItems -Path "scripts/config" | Where-Object { $_.type -eq 'file' -and $_.download_url })) {
-    [string]$outPath = "C:\cwave\scripts\config\$($item.name)"
-    Save-RepoFile -Url ([string]$item.download_url) -OutPath $outPath
-    Write-Host "Staged: scripts/config/$($item.name)" -ForegroundColor Green
-    $updatedCount++
+foreach ($f in @(cwGet "scripts/config" | Where-Object { $_.type -eq 'file' -and $_.download_url })) {
+    cwSave $f.download_url "C:\cwave\scripts\config\$($f.name)"
+    Write-Host "Staged: scripts/config/$($f.name)" -ForegroundColor Green
+    $n++
 }
 
-foreach ($item in @(Get-RepoFilesRecursive -Path "scripts/modules" | Where-Object { $_.type -eq 'file' -and $_.download_url })) {
-    [string]$itemPath = $item.path
-    [string]$relativePath = $itemPath -replace '^scripts/modules/', ''
-    [string]$relativePathWin = $relativePath -replace '/', '\'
-    [string]$outPath = "C:\cwave\scripts\modules\$relativePathWin"
-    Save-RepoFile -Url ([string]$item.download_url) -OutPath $outPath
-    Write-Host "Staged: scripts/modules/$relativePath" -ForegroundColor Green
-    $updatedCount++
+foreach ($f in @(cwGetRecurse "scripts/modules" | Where-Object { $_.type -eq 'file' -and $_.download_url })) {
+    $rel = ($f.path -replace '^scripts/modules/','') -replace '/',  '\'
+    cwSave $f.download_url "C:\cwave\scripts\modules\$rel"
+    Write-Host "Staged: scripts/modules/$($f.path -replace '^scripts/modules/','')" -ForegroundColor Green
+    $n++
 }
 
 Write-Host ""
-Write-Host "Bootstrap complete. $updatedCount file(s) staged." -ForegroundColor Cyan
+Write-Host "Bootstrap complete. $n file(s) staged." -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  Run updates:  C:\cwave\run_updates.bat" -ForegroundColor White
