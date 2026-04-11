@@ -24,10 +24,12 @@ $null = cmd /c "mkdir C:\cwave\scripts\modules 2>nul"
 
 function cwGet {
     param([string]$p)
-    if ($p) {
-        @(Invoke-RestMethod -Uri "$apiBase/$p" -UseBasicParsing)
-    } else {
-        @(Invoke-RestMethod -Uri $apiBase -UseBasicParsing)
+    $uri = if ($p) { "$apiBase/$p" } else { $apiBase }
+    try {
+        @(Invoke-RestMethod -Uri $uri -UseBasicParsing -ErrorAction Stop)
+    } catch {
+        Write-Host "Failed to query '$p'. Error: $($_.Exception.Message)" -ForegroundColor Red
+        @()
     }
 }
 
@@ -35,55 +37,64 @@ function cwGetRecurse {
     param([string]$p)
     $r = @()
     foreach ($i in @(cwGet $p)) {
-        if ($i.type -eq 'file' -and $i.download_url) { $r += $i }
-        elseif ($i.type -eq 'dir') { $r += @(cwGetRecurse $i.path) }
+        if ($i.type -eq 'file' -and $i.download_url -and $i.name -is [string]) {
+            $r += $i
+        } elseif ($i.type -eq 'dir' -and $i.path -is [string]) {
+            $r += @(cwGetRecurse $i.path)
+        }
     }
     $r
 }
 
 function cwSave {
     param([string]$url, [string]$out)
-    $par = [System.IO.Path]::GetDirectoryName($out)
-    $null = cmd /c "mkdir `"$par`" 2>nul"
+    $null = cmd /c "mkdir `"$(Split-Path $out)`" 2>nul"
     Invoke-WebRequest -Uri $url -OutFile $out -UseBasicParsing
 }
 
 $n = 0
 
-foreach ($f in @(cwGet "" | Where-Object { $_.type -eq 'file' -and $_.name -match '\.bat$' -and $_.download_url })) {
-    cwSave $f.download_url "C:\cwave\$($f.name)"
+# Root BAT files only
+foreach ($f in @(cwGet "" | Where-Object { $_.type -eq 'file' -and $_.name -is [string] -and $_.name -match '\.bat$' -and $_.download_url })) {
+    cwSave ([string]$f.download_url) "C:\cwave\$([string]$f.name)"
     Write-Host "Staged: $($f.name)" -ForegroundColor Green
     $n++
 }
 
-foreach ($f in @(cwGet "" | Where-Object { $_.type -eq 'file' -and $_.name -match '\.ps1$' -and $_.name -ne 'bootstrap.ps1' -and $_.download_url })) {
-    cwSave $f.download_url "C:\cwave\$($f.name)"
+# Root PS1 files excluding bootstrap
+foreach ($f in @(cwGet "" | Where-Object { $_.type -eq 'file' -and $_.name -is [string] -and $_.name -match '\.ps1$' -and $_.name -ne 'bootstrap.ps1' -and $_.download_url })) {
+    cwSave ([string]$f.download_url) "C:\cwave\$([string]$f.name)"
     Write-Host "Staged: $($f.name)" -ForegroundColor Green
     $n++
 }
 
-foreach ($f in @(cwGet "scripts" | Where-Object { $_.type -eq 'file' -and $_.download_url })) {
-    cwSave $f.download_url "C:\cwave\scripts\$($f.name)"
+# scripts/ PS1s
+foreach ($f in @(cwGet "scripts" | Where-Object { $_.type -eq 'file' -and $_.name -is [string] -and $_.download_url })) {
+    cwSave ([string]$f.download_url) "C:\cwave\scripts\$([string]$f.name)"
     Write-Host "Staged: scripts/$($f.name)" -ForegroundColor Green
     $n++
 }
 
-foreach ($f in @(cwGet "scripts/functions" | Where-Object { $_.type -eq 'file' -and $_.download_url })) {
-    cwSave $f.download_url "C:\cwave\scripts\functions\$($f.name)"
+# functions/
+foreach ($f in @(cwGet "scripts/functions" | Where-Object { $_.type -eq 'file' -and $_.name -is [string] -and $_.download_url })) {
+    cwSave ([string]$f.download_url) "C:\cwave\scripts\functions\$([string]$f.name)"
     Write-Host "Staged: scripts/functions/$($f.name)" -ForegroundColor Green
     $n++
 }
 
-foreach ($f in @(cwGet "scripts/config" | Where-Object { $_.type -eq 'file' -and $_.download_url })) {
-    cwSave $f.download_url "C:\cwave\scripts\config\$($f.name)"
+# config/
+foreach ($f in @(cwGet "scripts/config" | Where-Object { $_.type -eq 'file' -and $_.name -is [string] -and $_.download_url })) {
+    cwSave ([string]$f.download_url) "C:\cwave\scripts\config\$([string]$f.name)"
     Write-Host "Staged: scripts/config/$($f.name)" -ForegroundColor Green
     $n++
 }
 
-foreach ($f in @(cwGetRecurse "scripts/modules" | Where-Object { $_.type -eq 'file' -and $_.download_url })) {
-    $rel = ($f.path -replace '^scripts/modules/','') -replace '/',  '\'
-    cwSave $f.download_url "C:\cwave\scripts\modules\$rel"
-    Write-Host "Staged: scripts/modules/$($f.path -replace '^scripts/modules/','')" -ForegroundColor Green
+# modules/ recursive
+foreach ($f in @(cwGetRecurse "scripts/modules")) {
+    $rel = ([string]$f.path) -replace '^scripts/modules/', ''
+    $relWin = $rel -replace '/', '\'
+    cwSave ([string]$f.download_url) "C:\cwave\scripts\modules\$relWin"
+    Write-Host "Staged: scripts/modules/$rel" -ForegroundColor Green
     $n++
 }
 
