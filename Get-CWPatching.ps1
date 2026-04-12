@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Cloudwave EUC patching toolkit bootstrap.
+Cloudwave EUC toolset import.
 For questions, contact Dan Stark / Cloudwave EUC
 #>
 
@@ -13,8 +13,7 @@ $raw = "https://raw.githubusercontent.com/DanStarkTX/cw_patching/main"
 $api = "https://api.github.com/repos/DanStarkTX/cw_patching/contents"
 
 Write-Host ""
-Write-Host "=== Cloudwave EUC Patching Bootstrap ===" -ForegroundColor Cyan
-Write-Host "Staging payload to C:\cwave..." -ForegroundColor Yellow
+Write-Host "=== Cloudwave EUC Toolset Import ===" -ForegroundColor Cyan
 Write-Host ""
 
 $null = cmd /c "mkdir C:\cwave 2>nul"
@@ -25,21 +24,18 @@ $null = cmd /c "mkdir C:\cwave\scripts\modules 2>nul"
 $null = cmd /c "mkdir C:\cwave\scripts\modules\PSWindowsUpdate 2>nul"
 $null = cmd /c "mkdir C:\cwave\scripts\modules\PSWindowsUpdate\2.2.1.5 2>nul"
 
-$n = 0
-
 function cwGet {
     param([string]$p)
     try {
-        $raw = Invoke-RestMethod -Uri "$api/$p" -ErrorAction Stop
+        $result = Invoke-RestMethod -Uri "$api/$p" -ErrorAction Stop
         $items = @()
-        foreach ($item in $raw) {
+        foreach ($item in $result) {
             if ($item.type -eq 'file' -and $item.download_url -and $item.name) {
                 $items += $item
             }
         }
         $items
     } catch {
-        Write-Host "Failed to query '$p'. Error: $($_.Exception.Message)" -ForegroundColor Red
         @()
     }
 }
@@ -47,62 +43,51 @@ function cwGet {
 function cwSave {
     param([string]$url, [string]$out)
     try {
-        Invoke-WebRequest -Uri $url -OutFile $out -UseBasicParsing
+        Invoke-WebRequest -Uri $url -OutFile $out -UseBasicParsing -ErrorAction Stop
         $true
     } catch {
-        Write-Host "Failed to download $url. Error: $($_.Exception.Message)" -ForegroundColor Red
         $false
     }
 }
 
-# Root BAT launchers - known filenames
+$fileList = @()
+
 foreach ($name in @("run_updates.bat", "run_cleanup.bat")) {
-    if (cwSave "$raw/$name" "C:\cwave\$name") {
-        Write-Host "Staged: $name" -ForegroundColor Green
-        $n++
-    }
+    $fileList += [PSCustomObject]@{ Url = "$raw/$name"; Out = "C:\cwave\$name" }
 }
 
-# Scripts - known filenames
 foreach ($name in @("do_updates.ps1", "do_cleanup.ps1", "Check-SystemHealth.ps1", "Invoke-DoUpdates.ps1", "Invoke-DoCleanup.ps1")) {
-    if (cwSave "$raw/scripts/$name" "C:\cwave\scripts\$name") {
-        Write-Host "Staged: scripts/$name" -ForegroundColor Green
-        $n++
-    }
+    $fileList += [PSCustomObject]@{ Url = "$raw/scripts/$name"; Out = "C:\cwave\scripts\$name" }
 }
 
-# Helpers
 foreach ($f in cwGet "scripts/functions") {
-    $url = $f.download_url
-    $name = $f.name
-    if (cwSave $url "C:\cwave\scripts\functions\$name") {
-        Write-Host "Staged: scripts/functions/$name" -ForegroundColor Green
-        $n++
-    }
+    $fileList += [PSCustomObject]@{ Url = $f.download_url; Out = "C:\cwave\scripts\functions\$($f.name)" }
 }
 
-# Config
 foreach ($f in cwGet "scripts/config") {
-    $url = $f.download_url
-    $name = $f.name
-    if (cwSave $url "C:\cwave\scripts\config\$name") {
-        Write-Host "Staged: scripts/config/$name" -ForegroundColor Green
-        $n++
+    $fileList += [PSCustomObject]@{ Url = $f.download_url; Out = "C:\cwave\scripts\config\$($f.name)" }
+}
+
+foreach ($f in cwGet "scripts/modules/PSWindowsUpdate/2.2.1.5") {
+    $fileList += [PSCustomObject]@{ Url = $f.download_url; Out = "C:\cwave\scripts\modules\PSWindowsUpdate\2.2.1.5\$($f.name)" }
+}
+
+$total = $fileList.Count
+$imported = 0
+
+for ($i = 0; $i -lt $total; $i++) {
+    $file = $fileList[$i]
+    $fileName = Split-Path $file.Out -Leaf
+    Write-Progress -Activity "Cloudwave EUC Toolset Import" -Status "Importing $fileName" -PercentComplete (($i / $total) * 100)
+    if (cwSave $file.Url $file.Out) {
+        $imported++
     }
 }
 
-# PSWindowsUpdate module
-foreach ($f in cwGet "scripts/modules/PSWindowsUpdate/2.2.1.5") {
-    $url = $f.download_url
-    $name = $f.name
-    if (cwSave $url "C:\cwave\scripts\modules\PSWindowsUpdate\2.2.1.5\$name") {
-        Write-Host "Staged: scripts/modules/PSWindowsUpdate/2.2.1.5/$name" -ForegroundColor Green
-        $n++
-    }
-}
+Write-Progress -Activity "Cloudwave EUC Toolset Import" -Completed
 
 Write-Host ""
-Write-Host "Bootstrap complete. $n file(s) staged." -ForegroundColor Cyan
+Write-Host "Import complete. $imported file(s) imported." -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  Run updates:  C:\cwave\run_updates.bat" -ForegroundColor White
