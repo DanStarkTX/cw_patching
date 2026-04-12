@@ -107,5 +107,4 @@ Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  Run updates:  C:\cwave\run_updates.bat" -ForegroundColor White
 Write-Host "  Run cleanup:  C:\cwave\run_cleanup.bat" -ForegroundColor White
-Write-Host "  Health check: C:\cwave\scripts\Check-SystemHealth.ps1" -ForegroundColor White
 Write-Host ""
