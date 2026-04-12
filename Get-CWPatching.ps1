@@ -35,7 +35,7 @@ Write-Host ""
 Write-Host "=== Cloudwave EUC Toolset Import ===" -ForegroundColor Cyan
 Write-Host ""
 
-Write-ImportEventLog -Message "Cloudwave EUC Toolset Import started on $env:COMPUTERNAME." -EventId 5000
+Write-ImportEventLog -Message "Cloudwave EUC Toolset Import started on $env:COMPUTERNAME." -EventId 1030
 
 $null = cmd /c "mkdir C:\cwave 2>nul"
 $null = cmd /c "mkdir C:\cwave\scripts 2>nul"
@@ -134,7 +134,7 @@ for ($i = 0; $i -lt $total; $i++) {
         Write-Progress -Activity "Cloudwave EUC Toolset Import" -Status "Importing $fileName" -PercentComplete (($i / $total) * 100)
         if (cwSave $file.Url $file.Out) {
             $imported++
-            Write-ImportEventLog -Message "Imported: $fileName" -EventId 5001
+            Write-ImportEventLog -Message "Imported: $fileName" -EventId 1031
         }
     } else {
         $skipped++
@@ -151,7 +151,7 @@ if ($skipped -gt 0) {
 }
 
 Write-Host $summary -ForegroundColor Cyan
-Write-ImportEventLog -Message $summary -EventId 5002
+Write-ImportEventLog -Message $summary -EventId 1032
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  Run updates:  C:\cwave\run_updates.bat" -ForegroundColor White
