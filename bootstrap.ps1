@@ -30,7 +30,14 @@ $n = 0
 function cwGet {
     param([string]$p)
     try {
-        @(Invoke-RestMethod -Uri "$api/$p" -ErrorAction Stop) | Where-Object { $_.type -eq 'file' -and $_.download_url -and $_.name }
+        $raw = Invoke-RestMethod -Uri "$api/$p" -ErrorAction Stop
+        $items = @()
+        foreach ($item in $raw) {
+            if ($item.type -eq 'file' -and $item.download_url -and $item.name) {
+                $items += $item
+            }
+        }
+        $items
     } catch {
         Write-Host "Failed to query '$p'. Error: $($_.Exception.Message)" -ForegroundColor Red
         @()
