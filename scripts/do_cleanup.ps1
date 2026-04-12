@@ -252,32 +252,52 @@ function Clear-Folders {
 Initialize-Logging
 Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Information -EventId $EventIDStart -Message "Starting cleanup script."
 
+$border = '=' * 80
+
 try {
- Write-Host "`n=== Step 1: Removing Scheduled Task Folders ===" -ForegroundColor DarkBlue
+ Write-Host ""
+ Write-Host $border -ForegroundColor DarkBlue
+ Write-Host "-- Removing Scheduled Task Folders ---" -ForegroundColor Yellow
+ Write-Host $border -ForegroundColor DarkBlue
  Remove-TaskFolders -TaskFolders $TaskFoldersToRemove
 
- Write-Host "`n=== Step 2: Clearing Folders ===" -ForegroundColor DarkBlue
+ Write-Host ""
+ Write-Host $border -ForegroundColor DarkBlue
+ Write-Host "-- Clearing Folders ---" -ForegroundColor Yellow
+ Write-Host $border -ForegroundColor DarkBlue
  Clear-Folders -Folders $FoldersToClean
 
- Write-Host "`n=== Step 3: Disabling Services via Registry ===" -ForegroundColor DarkBlue
+ Write-Host ""
+ Write-Host $border -ForegroundColor DarkBlue
+ Write-Host "-- Disabling Services ---" -ForegroundColor Yellow
+ Write-Host $border -ForegroundColor DarkBlue
  foreach ($serviceName in $ServicesToDisable) {
  Disable-ServiceViaRegistry -ServiceName $serviceName
  $LASTEXITCODE = 0
  }
 
- Write-Host "`n=== Step 4: Changing Service Logon Accounts to Guest ===" -ForegroundColor DarkBlue
+ Write-Host ""
+ Write-Host $border -ForegroundColor DarkBlue
+ Write-Host "-- Changing Service Logon Accounts ---" -ForegroundColor Yellow
+ Write-Host $border -ForegroundColor DarkBlue
  foreach ($serviceName in $ServicesToDisable) {
  Set-ServiceLogonAccount -ServiceName $serviceName
  $LASTEXITCODE = 0
  }
 
- Write-Host "`n=== Step 5: Restoring Protected Services ===" -ForegroundColor DarkBlue
+ Write-Host ""
+ Write-Host $border -ForegroundColor DarkBlue
+ Write-Host "-- Restoring Protected Services ---" -ForegroundColor Yellow
+ Write-Host $border -ForegroundColor DarkBlue
  foreach ($serviceName in $ProtectedServices) {
  Restore-ProtectedServiceStartup -ServiceName $serviceName
  $LASTEXITCODE = 0
  }
 
- Write-Host "`n=== Final Service Status ===" -ForegroundColor DarkBlue
+ Write-Host ""
+ Write-Host $border -ForegroundColor DarkBlue
+ Write-Host "-- Final Service Status ---" -ForegroundColor Yellow
+ Write-Host $border -ForegroundColor DarkBlue
  foreach ($serviceName in ($ServicesToDisable + $ProtectedServices)) {
  $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
  if ($service) {
@@ -293,7 +313,6 @@ try {
  }
  }
 
- $border = '=' * 80
  Write-Host $border -ForegroundColor DarkBlue
  Write-Host "-- Cleanup is Finished ---" -ForegroundColor Yellow
  Write-Host "-- Services sealed, tasks removed ---" -ForegroundColor Yellow
