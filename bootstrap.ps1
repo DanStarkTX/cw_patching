@@ -72,25 +72,31 @@ foreach ($name in @("do_updates.ps1", "do_cleanup.ps1", "Check-SystemHealth.ps1"
 }
 
 # Helpers
-foreach ($f in @(cwGet "scripts/functions")) {
-    if (cwSave ([string]$f.download_url) "C:\cwave\scripts\functions\$([string]$f.name)") {
-        Write-Host "Staged: scripts/functions/$($f.name)" -ForegroundColor Green
+foreach ($f in cwGet "scripts/functions") {
+    $url = $f.download_url
+    $name = $f.name
+    if (cwSave $url "C:\cwave\scripts\functions\$name") {
+        Write-Host "Staged: scripts/functions/$name" -ForegroundColor Green
         $n++
     }
 }
 
 # Config
-foreach ($f in @(cwGet "scripts/config")) {
-    if (cwSave ([string]$f.download_url) "C:\cwave\scripts\config\$([string]$f.name)") {
-        Write-Host "Staged: scripts/config/$($f.name)" -ForegroundColor Green
+foreach ($f in cwGet "scripts/config") {
+    $url = $f.download_url
+    $name = $f.name
+    if (cwSave $url "C:\cwave\scripts\config\$name") {
+        Write-Host "Staged: scripts/config/$name" -ForegroundColor Green
         $n++
     }
 }
 
 # PSWindowsUpdate module
-foreach ($f in @(cwGet "scripts/modules/PSWindowsUpdate/2.2.1.5")) {
-    if (cwSave ([string]$f.download_url) "C:\cwave\scripts\modules\PSWindowsUpdate\2.2.1.5\$([string]$f.name)") {
-        Write-Host "Staged: scripts/modules/PSWindowsUpdate/2.2.1.5/$($f.name)" -ForegroundColor Green
+foreach ($f in cwGet "scripts/modules/PSWindowsUpdate/2.2.1.5") {
+    $url = $f.download_url
+    $name = $f.name
+    if (cwSave $url "C:\cwave\scripts\modules\PSWindowsUpdate\2.2.1.5\$name") {
+        Write-Host "Staged: scripts/modules/PSWindowsUpdate/2.2.1.5/$name" -ForegroundColor Green
         $n++
     }
 }
