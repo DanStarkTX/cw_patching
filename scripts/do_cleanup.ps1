@@ -254,10 +254,16 @@ Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Informatio
 
 $border = '=' * 80
 
+function Write-Banner {
+    param([string]$Text, [string]$Color = 'Yellow')
+    $centered = $Text.PadLeft([Math]::Floor(($border.Length + $Text.Length) / 2)).PadRight($border.Length)
+    Write-Host $border -ForegroundColor DarkBlue
+    Write-Host $centered -ForegroundColor $Color
+    Write-Host $border -ForegroundColor DarkBlue
+}
+
 Write-Host ""
-Write-Host $border -ForegroundColor DarkBlue
-Write-Host "-- Cleanup Script ---" -ForegroundColor Yellow
-Write-Host $border -ForegroundColor DarkBlue
+Write-Banner "-- Cleanup Script ---"
 
 try {
  Write-Host ""
@@ -307,7 +313,8 @@ try {
  }
 
  Write-Host ""
- Write-Host "[DONE] Cleanup completed successfully." -ForegroundColor Green
+ Write-Banner "-- Cleanup Complete ---"
+ Write-Host ""
  Write-Host "[DONE] Services sealed, tasks removed." -ForegroundColor Green
  Write-Host "[ACTION] Shutdown and take your snapshot." -ForegroundColor Yellow
  Write-Host ""

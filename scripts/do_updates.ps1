@@ -71,10 +71,16 @@ Init-EventLog -EventSource $EventSource -LogName $LogName
 Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Information -EventId 1001 -Message "Windows Update script started."
 $border = '=' * 80
 
+function Write-Banner {
+    param([string]$Text, [string]$Color = 'Yellow')
+    $centered = $Text.PadLeft([Math]::Floor(($border.Length + $Text.Length) / 2)).PadRight($border.Length)
+    Write-Host $border -ForegroundColor DarkBlue
+    Write-Host $centered -ForegroundColor $Color
+    Write-Host $border -ForegroundColor DarkBlue
+}
+
 Write-Host ""
-Write-Host $border -ForegroundColor DarkBlue
-Write-Host "-- Windows Update Script ---" -ForegroundColor Yellow
-Write-Host $border -ForegroundColor DarkBlue
+Write-Banner "-- Windows Update Script ---"
 
 Write-Host ""
 Write-Host "=== Checking and Restoring Service Accounts ===" -ForegroundColor DarkBlue
