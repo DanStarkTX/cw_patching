@@ -286,21 +286,13 @@ function Test-ResourceSignals {
 # ============================================================
 function Write-HealthVerdict {
     Write-Host ""
-    $border = '=' * 80
-    Write-Host $border -ForegroundColor DarkBlue
-
     if ($script:Errors.Count -gt 0) {
-        Write-Host "-- Health Check is Finished ---" -ForegroundColor Yellow
-        Write-Host "-- NEEDS ATTENTION: $($script:Errors.Count) error(s) detected ---" -ForegroundColor Red
+        Write-Host "[NEEDS ATTENTION] $($script:Errors.Count) error(s) detected. Review output above." -ForegroundColor Red
     } elseif ($script:Warnings.Count -gt 0) {
-        Write-Host "-- Health Check is Finished ---" -ForegroundColor Yellow
-        Write-Host "-- HEALTHY WITH WARNINGS: $($script:Warnings.Count) warning(s) detected ---" -ForegroundColor DarkYellow
+        Write-Host "[HEALTHY WITH WARNINGS] $($script:Warnings.Count) warning(s) detected. Review output above." -ForegroundColor DarkYellow
     } else {
-        Write-Host "-- Health Check is Finished ---" -ForegroundColor Yellow
-        Write-Host "-- HEALTHY: No errors or warnings detected ---" -ForegroundColor Yellow
+        Write-Host "[HEALTHY] No errors or warnings detected." -ForegroundColor Green
     }
-
-    Write-Host $border -ForegroundColor DarkBlue
     Write-Host ""
 }
 

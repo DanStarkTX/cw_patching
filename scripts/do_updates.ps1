@@ -386,41 +386,25 @@ Install-WindowsUpdatePrerequisites
 Invoke-WindowsUpdate
 
 if ($script:PendingRebootBlocked) {
- Write-Host "Windows Update process stopped because a reboot is already pending." -ForegroundColor DarkYellow
+ Write-Host ""
+ Write-Host "[REBOOT REQUIRED] A reboot is already pending. Reboot the system then rerun run_updates.bat." -ForegroundColor Red
  Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Warning -EventId 1027 -Message "Windows Update process stopped because a reboot was already pending."
  Write-Host ""
- Write-Host $border -ForegroundColor DarkBlue
- Write-Host "-- Reboot Required ---" -ForegroundColor Red
- Write-Host "-- Reboot the system, then rerun run_updates.bat ---" -ForegroundColor Yellow
- Write-Host $border -ForegroundColor DarkBlue
- Write-Host ""
 } elseif ($script:SuccessfulInstallHistory.Count -gt 0) {
- Write-Host "Windows Update process completed successfully." -ForegroundColor Green
- Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Information -EventId 1017 -Message "Windows Update process completed successfully."
  Write-Host ""
- Write-Host $border -ForegroundColor DarkBlue
- Write-Host "-- Windows Updates are Finished ---" -ForegroundColor Yellow
- Write-Host "-- Updates installed. Reboot the system ---" -ForegroundColor Yellow
- Write-Host "-- After Reboot, run run_cleanup.bat ---" -ForegroundColor Yellow
- Write-Host $border -ForegroundColor DarkBlue
+ Write-Host "[DONE] Updates installed successfully." -ForegroundColor Green
+ Write-Host "[ACTION] Reboot the system, then run run_cleanup.bat." -ForegroundColor Yellow
+ Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Information -EventId 1017 -Message "Windows Update process completed successfully."
  Write-Host ""
 } elseif ($script:InstalledUpdates.Count -gt 0 -and (Test-PendingReboot)) {
- Write-Host "Windows Update process reached a reboot-pending state." -ForegroundColor DarkYellow
+ Write-Host ""
+ Write-Host "[PENDING] Updates were reported installed but not yet confirmed. Reboot to verify." -ForegroundColor DarkYellow
  Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Warning -EventId 1028 -Message "Windows Update process reported installs and is awaiting reboot before final confirmation."
  Write-Host ""
- Write-Host $border -ForegroundColor DarkBlue
- Write-Host "-- Windows Updates are Finished ---" -ForegroundColor Yellow
- Write-Host "-- Updates reported. Reboot to confirm ---" -ForegroundColor Yellow
- Write-Host $border -ForegroundColor DarkBlue
- Write-Host ""
 } else {
- Write-Host "Windows Update process completed successfully." -ForegroundColor Green
+ Write-Host ""
+ Write-Host "[DONE] No new updates found. System is up to date." -ForegroundColor Green
  Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Information -EventId 1017 -Message "Windows Update process completed successfully."
  Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Information -EventId 1018 -Message "No updates were installed. The system is up to date."
- Write-Host ""
- Write-Host $border -ForegroundColor DarkBlue
- Write-Host "-- Windows Updates are Finished ---" -ForegroundColor Yellow
- Write-Host "-- No new updates found. System is up to date ---" -ForegroundColor Yellow
- Write-Host $border -ForegroundColor DarkBlue
  Write-Host ""
 }

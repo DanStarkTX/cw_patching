@@ -313,11 +313,10 @@ try {
  }
  }
 
- Write-Host $border -ForegroundColor DarkBlue
- Write-Host "-- Cleanup is Finished ---" -ForegroundColor Yellow
- Write-Host "-- Services sealed, tasks removed ---" -ForegroundColor Yellow
- Write-Host "-- Ready for Shutdown and Snapshot ---" -ForegroundColor Yellow
- Write-Host $border -ForegroundColor DarkBlue
+ Write-Host ""
+ Write-Host "[DONE] Cleanup completed successfully." -ForegroundColor Green
+ Write-Host "[DONE] Services sealed, tasks removed." -ForegroundColor Green
+ Write-Host "[ACTION] Shutdown and take your snapshot." -ForegroundColor Yellow
  Write-Host ""
 
 } catch {
