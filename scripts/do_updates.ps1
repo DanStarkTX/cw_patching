@@ -83,7 +83,7 @@ Write-Host ""
 Write-Banner "Windows Update Script"
 
 Write-Host ""
-Write-Host "=== Checking and Restoring Service Accounts ===" -ForegroundColor Cyan
+Write-Host "=== Checking and Restoring Service Accounts ===" -ForegroundColor White
 foreach ($service in $requiredServices + $potentialServices) {
  try {
  $serviceObj = Get-SVCDetails -ServiceName $service
@@ -195,7 +195,7 @@ function Start-WUServices {
 
 function Set-WUServices {
  Write-Host ""
- Write-Host "=== Configuring Windows Update Services ===" -ForegroundColor Cyan
+ Write-Host "=== Configuring Windows Update Services ===" -ForegroundColor White
  foreach ($service in $requiredServices + $potentialServices) {
  $serviceObj = Get-Service -Name $service -ErrorAction SilentlyContinue
  if (-not $serviceObj) {
@@ -207,7 +207,7 @@ function Set-WUServices {
 
 function Install-WindowsUpdatePrerequisites {
  Write-Host ""
- Write-Host "=== Installing Prerequisites ===" -ForegroundColor Cyan
+ Write-Host "=== Installing Prerequisites ===" -ForegroundColor White
  Write-Host "Checking for localized or installed PSWindowsUpdate module..." -ForegroundColor Yellow
 
  $dependencyState = Import-LocalizedUpdateDependencies -ModulesRoot $ModulesRootPath
@@ -250,7 +250,7 @@ function Test-PendingReboot {
 
 function Invoke-WindowsUpdate {
  Write-Host ""
- Write-Host "=== Checking for Windows Updates ===" -ForegroundColor Cyan
+ Write-Host "=== Checking for Windows Updates ===" -ForegroundColor White
  Write-Host "Checking for available updates..." -ForegroundColor Yellow
 
  if (Test-PendingReboot) {
@@ -268,19 +268,19 @@ function Invoke-WindowsUpdate {
  return
  }
 
- Write-Host "Updates found: $($script:UpdatesList.Count)" -ForegroundColor Cyan
+ Write-Host "Updates found: $($script:UpdatesList.Count)" -ForegroundColor White
  foreach ($update in $script:UpdatesList) {
  $kbValue = ($update.KBArticleID | Out-String).Trim()
  if (-not $kbValue) {
  $kbValue = "NoKB"
  }
  $updateMessage = "Update available: KB$kbValue - $($update.Title)"
- Write-Host $updateMessage -ForegroundColor Cyan
+ Write-Host $updateMessage -ForegroundColor White
  Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Information -EventId 1013 -Message $updateMessage
  }
 
  Write-Host ""
- Write-Host "=== Installing Windows Updates ===" -ForegroundColor Cyan
+ Write-Host "=== Installing Windows Updates ===" -ForegroundColor White
 
  try {
  $script:InstalledUpdates = @(Install-WindowsUpdate -AcceptAll -IgnoreReboot -ErrorAction Stop -Verbose)
@@ -337,7 +337,7 @@ function Invoke-WindowsUpdate {
  }
 
  Write-Host ""
- Write-Host "=== Summary of Installed Updates ===" -ForegroundColor Cyan
+ Write-Host "=== Summary of Installed Updates ===" -ForegroundColor White
  if ($script:SuccessfulInstallHistory.Count -eq 0) {
  if ($script:InstalledUpdates.Count -gt 0 -and (Test-PendingReboot)) {
  Write-Host "Installed updates were reported, but confirmation in Get-WUHistory may not appear until after reboot." -ForegroundColor Yellow
@@ -366,7 +366,7 @@ function Invoke-WindowsUpdate {
  }
  Write-Host " - $kbDisplay | $($historyEntry.Title) | Installed: $installedTime | Category: $($historyEntry.Category)" -ForegroundColor Green
  }
- Write-Host "Saved run details to: $LastInstalledJsonPath" -ForegroundColor Cyan
+ Write-Host "Saved run details to: $LastInstalledJsonPath" -ForegroundColor White
  }
  } catch {
  Write-Host "Failed to check or install updates. Error: $($_.Exception.Message)" -ForegroundColor Red

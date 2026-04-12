@@ -267,36 +267,36 @@ Write-Banner "Cleanup Script"
 
 try {
  Write-Host ""
- Write-Host "=== Removing Scheduled Task Folders ===" -ForegroundColor Cyan
+ Write-Host "=== Removing Scheduled Task Folders ===" -ForegroundColor White
  Remove-TaskFolders -TaskFolders $TaskFoldersToRemove
 
  Write-Host ""
- Write-Host "=== Clearing Folders ===" -ForegroundColor Cyan
+ Write-Host "=== Clearing Folders ===" -ForegroundColor White
  Clear-Folders -Folders $FoldersToClean
 
  Write-Host ""
- Write-Host "=== Disabling Services ===" -ForegroundColor Cyan
+ Write-Host "=== Disabling Services ===" -ForegroundColor White
  foreach ($serviceName in $ServicesToDisable) {
  Disable-ServiceViaRegistry -ServiceName $serviceName
  $LASTEXITCODE = 0
  }
 
  Write-Host ""
- Write-Host "=== Changing Service Logon Accounts ===" -ForegroundColor Cyan
+ Write-Host "=== Changing Service Logon Accounts ===" -ForegroundColor White
  foreach ($serviceName in $ServicesToDisable) {
  Set-ServiceLogonAccount -ServiceName $serviceName
  $LASTEXITCODE = 0
  }
 
  Write-Host ""
- Write-Host "=== Restoring Protected Services ===" -ForegroundColor Cyan
+ Write-Host "=== Restoring Protected Services ===" -ForegroundColor White
  foreach ($serviceName in $ProtectedServices) {
  Restore-ProtectedServiceStartup -ServiceName $serviceName
  $LASTEXITCODE = 0
  }
 
  Write-Host ""
- Write-Host "=== Final Service Status ===" -ForegroundColor Cyan
+ Write-Host "=== Final Service Status ===" -ForegroundColor White
  foreach ($serviceName in ($ServicesToDisable + $ProtectedServices)) {
  $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
  if ($service) {

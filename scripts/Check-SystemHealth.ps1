@@ -30,7 +30,7 @@ $DismThresholdGB = 10
 function Write-Section {
     param ([string] $Title)
     Write-Host ""
-    Write-Host "=== $Title ===" -ForegroundColor Cyan
+    Write-Host "=== $Title ===" -ForegroundColor White
 }
 
 function Add-Warning {
@@ -145,7 +145,7 @@ function Test-DiskSpace {
         $usedGB = [math]::Round($disk.Used / 1GB, 2)
         $totalGB = [math]::Round(($disk.Free + $disk.Used) / 1GB, 2)
 
-        Write-Host "Drive $systemDrive - Total: ${totalGB}GB  Used: ${usedGB}GB  Free: ${freeGB}GB" -ForegroundColor Cyan
+        Write-Host "Drive $systemDrive - Total: ${totalGB}GB  Used: ${usedGB}GB  Free: ${freeGB}GB" -ForegroundColor White
 
         if ($freeGB -lt $DismThresholdGB) {
             Add-Warning "Free disk space is below ${DismThresholdGB}GB ($freeGB GB free). Running DISM component cleanup..."
@@ -252,7 +252,7 @@ function Test-ResourceSignals {
         $usedMemGB = [math]::Round(($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / 1MB, 2)
         $memPct = [math]::Round(($usedMemGB / $totalMemGB) * 100, 1)
 
-        Write-Host "Memory: Total ${totalMemGB}GB  Used ${usedMemGB}GB  Free ${freeMemGB}GB ($memPct% used)" -ForegroundColor Cyan
+        Write-Host "Memory: Total ${totalMemGB}GB  Used ${usedMemGB}GB  Free ${freeMemGB}GB ($memPct% used)" -ForegroundColor White
 
         if ($memPct -gt 90) {
             Add-Warning "Memory usage is critically high ($memPct% used)."
@@ -267,7 +267,7 @@ function Test-ResourceSignals {
 
     try {
         $cpuLoad = (Get-WmiObject -Class Win32_Processor -ErrorAction Stop | Measure-Object -Property LoadPercentage -Average).Average
-        Write-Host "CPU load: $cpuLoad%" -ForegroundColor Cyan
+        Write-Host "CPU load: $cpuLoad%" -ForegroundColor White
 
         if ($cpuLoad -gt 90) {
             Add-Warning "CPU load is critically high ($cpuLoad%). Something may be consuming the processor."
@@ -317,8 +317,8 @@ function Write-Banner {
 }
 
 Write-Banner "System Health Check"
-Write-Host "Computer : $env:COMPUTERNAME" -ForegroundColor Cyan
-Write-Host "Date/Time: $(Get-Date -Format 'MM/dd/yyyy hh:mm tt')" -ForegroundColor Cyan
+Write-Host "Computer : $env:COMPUTERNAME" -ForegroundColor White
+Write-Host "Date/Time: $(Get-Date -Format 'MM/dd/yyyy hh:mm tt')" -ForegroundColor White
 Write-Host ""
 
 Test-PendingReboot
