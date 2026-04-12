@@ -121,6 +121,7 @@ foreach ($f in cwGet "scripts/modules/PSWindowsUpdate/2.2.1.5") {
 $total = $fileList.Count
 $imported = 0
 $skipped = 0
+$importedFiles = @()
 
 for ($i = 0; $i -lt $total; $i++) {
     $file = $fileList[$i]
@@ -140,7 +141,7 @@ for ($i = 0; $i -lt $total; $i++) {
         Write-Progress -Activity "Cloudwave EUC Toolset Import" -Status "Importing $fileName" -PercentComplete (($i / $total) * 100)
         if (cwSave $file.Url $file.Out) {
             $imported++
-            Write-ImportEventLog -Message "Imported: $fileName" -EventId 1031
+            $importedFiles += $fileName
         }
     } else {
         $skipped++
@@ -157,6 +158,11 @@ if ($skipped -gt 0) {
 }
 
 Write-Host $summary -ForegroundColor Cyan
+
+if ($importedFiles.Count -gt 0) {
+    $fileDetail = "Files downloaded:`n" + ($importedFiles -join "`n")
+    Write-ImportEventLog -Message "$summary`n`n$fileDetail" -EventId 1031
+}
 Write-ImportEventLog -Message $summary -EventId 1032
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
