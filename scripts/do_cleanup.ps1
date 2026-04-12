@@ -293,13 +293,11 @@ try {
  }
  }
 
- $border = '*' * 60
+ $border = '=' * 60
  Write-Host $border -ForegroundColor Cyan
- Write-Host "* Clean-up Completed Successfully! *" -ForegroundColor Green
- Write-Host "* Update-related services are disabled for image sealing. *" -ForegroundColor Yellow
- Write-Host "* Windows Installer and TrustedInstaller are preserved in Manual mode. *" -ForegroundColor Yellow
- Write-Host "* Scheduled Tasks removed *" -ForegroundColor Yellow
- Write-Host "* Ready for Shutdown and Snapshot *" -ForegroundColor Yellow
+ Write-Host "-- Cleanup is Finished ---" -ForegroundColor Green
+ Write-Host "-- Services sealed, tasks removed ---" -ForegroundColor Green
+ Write-Host "-- Ready for Shutdown and Snapshot ---" -ForegroundColor Green
  Write-Host $border -ForegroundColor Cyan
  Write-Host ""
 
