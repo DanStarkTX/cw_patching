@@ -160,9 +160,12 @@ if ($skipped -gt 0) {
 Write-Host $summary -ForegroundColor Cyan
 
 if ($importedFiles.Count -gt 0) {
-    $nl = [Environment]::NewLine
-    $fileDetail = "Files downloaded:" + $nl + ($importedFiles -join $nl)
-    Write-ImportEventLog -Message ($summary + $nl + $nl + $fileDetail) -EventId 1031
+    $sb = New-Object System.Text.StringBuilder
+    [void]$sb.AppendLine($summary)
+    [void]$sb.AppendLine("")
+    [void]$sb.AppendLine("Files downloaded:")
+    foreach ($f in $importedFiles) { [void]$sb.AppendLine("  $f") }
+    Write-ImportEventLog -Message $sb.ToString() -EventId 1031
 }
 Write-ImportEventLog -Message $summary -EventId 1032
 Write-Host ""
