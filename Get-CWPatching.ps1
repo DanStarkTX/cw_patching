@@ -50,44 +50,78 @@ function cwSave {
     }
 }
 
+function Get-GitBlobSHA {
+    param([string]$Path)
+    try {
+        $content = [System.IO.File]::ReadAllBytes($Path)
+        $header = [System.Text.Encoding]::ASCII.GetBytes("blob $($content.Length)`0")
+        $combined = $header + $content
+        $sha1 = [System.Security.Cryptography.SHA1]::Create()
+        $hashBytes = $sha1.ComputeHash($combined)
+        ($hashBytes | ForEach-Object { $_.ToString("x2") }) -join ""
+    } catch {
+        $null
+    }
+}
+
 $fileList = @()
 
 foreach ($name in @("run_updates.bat", "run_cleanup.bat")) {
-    $fileList += [PSCustomObject]@{ Url = "$raw/$name"; Out = "C:\cwave\$name" }
+    $fileList += [PSCustomObject]@{ Url = "$raw/$name"; Out = "C:\cwave\$name"; SHA = $null }
 }
 
 foreach ($name in @("do_updates.ps1", "do_cleanup.ps1", "Check-SystemHealth.ps1", "Invoke-DoUpdates.ps1", "Invoke-DoCleanup.ps1")) {
-    $fileList += [PSCustomObject]@{ Url = "$raw/scripts/$name"; Out = "C:\cwave\scripts\$name" }
+    $fileList += [PSCustomObject]@{ Url = "$raw/scripts/$name"; Out = "C:\cwave\scripts\$name"; SHA = $null }
 }
 
 foreach ($f in cwGet "scripts/functions") {
-    $fileList += [PSCustomObject]@{ Url = $f.download_url; Out = "C:\cwave\scripts\functions\$($f.name)" }
+    $fileList += [PSCustomObject]@{ Url = $f.download_url; Out = "C:\cwave\scripts\functions\$($f.name)"; SHA = $f.sha }
 }
 
 foreach ($f in cwGet "scripts/config") {
-    $fileList += [PSCustomObject]@{ Url = $f.download_url; Out = "C:\cwave\scripts\config\$($f.name)" }
+    $fileList += [PSCustomObject]@{ Url = $f.download_url; Out = "C:\cwave\scripts\config\$($f.name)"; SHA = $f.sha }
 }
 
 foreach ($f in cwGet "scripts/modules/PSWindowsUpdate/2.2.1.5") {
-    $fileList += [PSCustomObject]@{ Url = $f.download_url; Out = "C:\cwave\scripts\modules\PSWindowsUpdate\2.2.1.5\$($f.name)" }
+    $fileList += [PSCustomObject]@{ Url = $f.download_url; Out = "C:\cwave\scripts\modules\PSWindowsUpdate\2.2.1.5\$($f.name)"; SHA = $f.sha }
 }
 
 $total = $fileList.Count
 $imported = 0
+$skipped = 0
 
 for ($i = 0; $i -lt $total; $i++) {
     $file = $fileList[$i]
     $fileName = Split-Path $file.Out -Leaf
-    Write-Progress -Activity "Cloudwave EUC Toolset Import" -Status "Importing $fileName" -PercentComplete (($i / $total) * 100)
-    if (cwSave $file.Url $file.Out) {
-        $imported++
+    Write-Progress -Activity "Cloudwave EUC Toolset Import" -Status "Checking $fileName" -PercentComplete (($i / $total) * 100)
+
+    $needsUpdate = $true
+
+    if ($file.SHA -and (Test-Path -LiteralPath $file.Out)) {
+        $localSHA = Get-GitBlobSHA -Path $file.Out
+        if ($localSHA -and $localSHA -eq $file.SHA) {
+            $needsUpdate = $false
+        }
+    }
+
+    if ($needsUpdate) {
+        Write-Progress -Activity "Cloudwave EUC Toolset Import" -Status "Importing $fileName" -PercentComplete (($i / $total) * 100)
+        if (cwSave $file.Url $file.Out) {
+            $imported++
+        }
+    } else {
+        $skipped++
     }
 }
 
 Write-Progress -Activity "Cloudwave EUC Toolset Import" -Completed
 
 Write-Host ""
-Write-Host "Import complete: $imported files downloaded." -ForegroundColor Cyan
+if ($skipped -gt 0) {
+    Write-Host "Import complete: $imported file(s) downloaded, $skipped already up to date." -ForegroundColor Cyan
+} else {
+    Write-Host "Import complete: $imported files downloaded." -ForegroundColor Cyan
+}
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  Run updates:  C:\cwave\run_updates.bat" -ForegroundColor White
