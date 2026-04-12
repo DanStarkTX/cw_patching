@@ -11,7 +11,7 @@ if ($PSVersionTable.PSEdition -ne "Desktop") {
 
 $api = "https://api.github.com/repos/DanStarkTX/cw_patching/contents"
 
-$EventSource = "CWPatchingImport"
+$EventSource = "EUC Script Import"
 $LogName = "Application"
 
 function Write-ImportEventLog {
@@ -19,16 +19,22 @@ function Write-ImportEventLog {
         [string]$Message,
         [ValidateSet('Information','Warning','Error')]
         [string]$EntryType = 'Information',
-        [int]$EventId = 5000
+        [int]$EventId = 1030
     )
     try {
         if (-not [System.Diagnostics.EventLog]::SourceExists($EventSource)) {
             [System.Diagnostics.EventLog]::CreateEventSource($EventSource, $LogName)
         }
-        $eventLog = New-Object System.Diagnostics.EventLog($LogName)
-        $eventLog.Source = $EventSource
-        $eventLog.WriteEntry($Message, [System.Diagnostics.EventLogEntryType]::$EntryType, $EventId)
-    } catch { }
+        $log = New-Object System.Diagnostics.EventLog($LogName)
+        $log.Source = $EventSource
+        $log.WriteEntry($Message, [System.Diagnostics.EventLogEntryType]::$EntryType, $EventId)
+    } catch {
+        try {
+            $log = New-Object System.Diagnostics.EventLog($LogName)
+            $log.Source = "WindowsUpdateScript"
+            $log.WriteEntry("[EUC Script Import] $Message", [System.Diagnostics.EventLogEntryType]::$EntryType, $EventId)
+        } catch { }
+    }
 }
 
 Write-Host ""
