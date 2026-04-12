@@ -87,7 +87,7 @@ for ($i = 0; $i -lt $total; $i++) {
 Write-Progress -Activity "Cloudwave EUC Toolset Import" -Completed
 
 Write-Host ""
-Write-Host "Import complete. $imported file(s) imported." -ForegroundColor Cyan
+Write-Host "Import complete: $imported files downloaded." -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  Run updates:  C:\cwave\run_updates.bat" -ForegroundColor White
