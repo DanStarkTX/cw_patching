@@ -13,13 +13,13 @@ Cloudwave EUC patching tools for Windows 10/11 gold images and operator desktops
 **Stable Branch (Recommended)**
 
 ```powershell
-$client = New-Object System.Net.WebClient; $client.CachePolicy = New-Object System.Net.Cache.RequestCachePolicy([System.Net.Cache.RequestCacheLevel]::NoCacheNoStore); $client.DownloadFile("https://raw.githubusercontent.com/DanStarkTX/cw_patching/main/bootstrap.ps1", "$env:TEMP\cw_bootstrap.ps1"); powershell -ExecutionPolicy Bypass -File "$env:TEMP\cw_bootstrap.ps1"
+$client = New-Object System.Net.WebClient; $client.CachePolicy = New-Object System.Net.Cache.RequestCachePolicy([System.Net.Cache.RequestCacheLevel]::NoCacheNoStore); $client.DownloadFile("https://raw.githubusercontent.com/DanStarkTX/cw_patching/main/Get-CWPatching.ps1", "$env:TEMP\Get-CWPatching.ps1"); powershell -ExecutionPolicy Bypass -File "$env:TEMP\Get-CWPatching.ps1"
 ```
 
 **Dev Branch**
 
 ```powershell
-$client = New-Object System.Net.WebClient; $client.CachePolicy = New-Object System.Net.Cache.RequestCachePolicy([System.Net.Cache.RequestCacheLevel]::NoCacheNoStore); $client.DownloadFile("https://raw.githubusercontent.com/DanStarkTX/cw_patching/dev/bootstrap.ps1", "$env:TEMP\cw_bootstrap.ps1"); powershell -ExecutionPolicy Bypass -File "$env:TEMP\cw_bootstrap.ps1"
+$client = New-Object System.Net.WebClient; $client.CachePolicy = New-Object System.Net.Cache.RequestCachePolicy([System.Net.Cache.RequestCacheLevel]::NoCacheNoStore); $client.DownloadFile("https://raw.githubusercontent.com/DanStarkTX/cw_patching/dev/Get-CWPatching.ps1", "$env:TEMP\Get-CWPatching.ps1"); powershell -ExecutionPolicy Bypass -File "$env:TEMP\Get-CWPatching.ps1"
 ```
 
 ## Requirements
