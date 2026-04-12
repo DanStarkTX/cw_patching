@@ -9,7 +9,6 @@ if ($PSVersionTable.PSEdition -ne "Desktop") {
     exit 1
 }
 
-$raw = "https://raw.githubusercontent.com/DanStarkTX/cw_patching/main"
 $api = "https://api.github.com/repos/DanStarkTX/cw_patching/contents"
 
 Write-Host ""
@@ -66,22 +65,27 @@ function Get-GitBlobSHA {
 
 $fileList = @()
 
-foreach ($name in @("run_updates.bat", "run_cleanup.bat")) {
-    $fileList += [PSCustomObject]@{ Url = "$raw/$name"; Out = "C:\cwave\$name"; SHA = $null }
+# Root files
+foreach ($f in @(cwGet "" | Where-Object { $_.name -match '\.bat$|\.ps1$' -and $_.name -ne 'Get-CWPatching.ps1' })) {
+    $fileList += [PSCustomObject]@{ Url = $f.download_url; Out = "C:\cwave\$($f.name)"; SHA = $f.sha }
 }
 
-foreach ($name in @("do_updates.ps1", "do_cleanup.ps1", "Check-SystemHealth.ps1", "Invoke-DoUpdates.ps1", "Invoke-DoCleanup.ps1")) {
-    $fileList += [PSCustomObject]@{ Url = "$raw/scripts/$name"; Out = "C:\cwave\scripts\$name"; SHA = $null }
+# Scripts
+foreach ($f in cwGet "scripts") {
+    $fileList += [PSCustomObject]@{ Url = $f.download_url; Out = "C:\cwave\scripts\$($f.name)"; SHA = $f.sha }
 }
 
+# Functions
 foreach ($f in cwGet "scripts/functions") {
     $fileList += [PSCustomObject]@{ Url = $f.download_url; Out = "C:\cwave\scripts\functions\$($f.name)"; SHA = $f.sha }
 }
 
+# Config
 foreach ($f in cwGet "scripts/config") {
     $fileList += [PSCustomObject]@{ Url = $f.download_url; Out = "C:\cwave\scripts\config\$($f.name)"; SHA = $f.sha }
 }
 
+# PSWindowsUpdate module
 foreach ($f in cwGet "scripts/modules/PSWindowsUpdate/2.2.1.5") {
     $fileList += [PSCustomObject]@{ Url = $f.download_url; Out = "C:\cwave\scripts\modules\PSWindowsUpdate\2.2.1.5\$($f.name)"; SHA = $f.sha }
 }
