@@ -30,7 +30,7 @@ $DismThresholdGB = 10
 function Write-Section {
     param ([string] $Title)
     Write-Host ""
-    Write-Host "=== $Title ===" -ForegroundColor Cyan
+    Write-Host "=== $Title ===" -ForegroundColor DarkBlue
 }
 
 function Add-Warning {
@@ -145,7 +145,7 @@ function Test-DiskSpace {
         $usedGB = [math]::Round($disk.Used / 1GB, 2)
         $totalGB = [math]::Round(($disk.Free + $disk.Used) / 1GB, 2)
 
-        Write-Host "Drive $systemDrive - Total: ${totalGB}GB  Used: ${usedGB}GB  Free: ${freeGB}GB" -ForegroundColor Cyan
+        Write-Host "Drive $systemDrive - Total: ${totalGB}GB  Used: ${usedGB}GB  Free: ${freeGB}GB" -ForegroundColor DarkBlue
 
         if ($freeGB -lt $DismThresholdGB) {
             Add-Warning "Free disk space is below ${DismThresholdGB}GB ($freeGB GB free). Running DISM component cleanup..."
@@ -252,7 +252,7 @@ function Test-ResourceSignals {
         $usedMemGB = [math]::Round(($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / 1MB, 2)
         $memPct = [math]::Round(($usedMemGB / $totalMemGB) * 100, 1)
 
-        Write-Host "Memory: Total ${totalMemGB}GB  Used ${usedMemGB}GB  Free ${freeMemGB}GB ($memPct% used)" -ForegroundColor Cyan
+        Write-Host "Memory: Total ${totalMemGB}GB  Used ${usedMemGB}GB  Free ${freeMemGB}GB ($memPct% used)" -ForegroundColor DarkBlue
 
         if ($memPct -gt 90) {
             Add-Warning "Memory usage is critically high ($memPct% used)."
@@ -267,7 +267,7 @@ function Test-ResourceSignals {
 
     try {
         $cpuLoad = (Get-WmiObject -Class Win32_Processor -ErrorAction Stop | Measure-Object -Property LoadPercentage -Average).Average
-        Write-Host "CPU load: $cpuLoad%" -ForegroundColor Cyan
+        Write-Host "CPU load: $cpuLoad%" -ForegroundColor DarkBlue
 
         if ($cpuLoad -gt 90) {
             Add-Warning "CPU load is critically high ($cpuLoad%). Something may be consuming the processor."
@@ -287,20 +287,20 @@ function Test-ResourceSignals {
 function Write-HealthVerdict {
     Write-Host ""
     $border = '=' * 80
-    Write-Host $border -ForegroundColor Cyan
+    Write-Host $border -ForegroundColor DarkBlue
 
     if ($script:Errors.Count -gt 0) {
-        Write-Host "-- Health Check is Finished ---" -ForegroundColor Red
+        Write-Host "-- Health Check is Finished ---" -ForegroundColor Yellow
         Write-Host "-- NEEDS ATTENTION: $($script:Errors.Count) error(s) detected ---" -ForegroundColor Red
     } elseif ($script:Warnings.Count -gt 0) {
         Write-Host "-- Health Check is Finished ---" -ForegroundColor Yellow
-        Write-Host "-- HEALTHY WITH WARNINGS: $($script:Warnings.Count) warning(s) detected ---" -ForegroundColor Yellow
+        Write-Host "-- HEALTHY WITH WARNINGS: $($script:Warnings.Count) warning(s) detected ---" -ForegroundColor DarkYellow
     } else {
-        Write-Host "-- Health Check is Finished ---" -ForegroundColor Green
-        Write-Host "-- HEALTHY: No errors or warnings detected ---" -ForegroundColor Green
+        Write-Host "-- Health Check is Finished ---" -ForegroundColor Yellow
+        Write-Host "-- HEALTHY: No errors or warnings detected ---" -ForegroundColor Yellow
     }
 
-    Write-Host $border -ForegroundColor Cyan
+    Write-Host $border -ForegroundColor DarkBlue
     Write-Host ""
 }
 
@@ -308,9 +308,9 @@ function Write-HealthVerdict {
 # RUN ALL CHECKS
 # ============================================================
 Write-Host ""
-Write-Host "=== Cloudwave EUC - System Health Check ===" -ForegroundColor Cyan
-Write-Host "Computer: $env:COMPUTERNAME" -ForegroundColor Cyan
-Write-Host "Date/Time: $(Get-Date -Format 'MM/dd/yyyy hh:mm tt')" -ForegroundColor Cyan
+Write-Host "=== Cloudwave EUC - System Health Check ===" -ForegroundColor DarkBlue
+Write-Host "Computer: $env:COMPUTERNAME" -ForegroundColor DarkBlue
+Write-Host "Date/Time: $(Get-Date -Format 'MM/dd/yyyy hh:mm tt')" -ForegroundColor DarkBlue
 Write-Host ""
 
 Test-PendingReboot
