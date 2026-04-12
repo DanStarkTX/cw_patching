@@ -300,9 +300,12 @@ function Write-HealthVerdict {
 # RUN ALL CHECKS
 # ============================================================
 Write-Host ""
-Write-Host "=== Cloudwave EUC - System Health Check ===" -ForegroundColor DarkBlue
-Write-Host "Computer: $env:COMPUTERNAME" -ForegroundColor DarkBlue
-Write-Host "Date/Time: $(Get-Date -Format 'MM/dd/yyyy hh:mm tt')" -ForegroundColor DarkBlue
+$border = '=' * 80
+Write-Host $border -ForegroundColor DarkBlue
+Write-Host "-- System Health Check ---" -ForegroundColor Yellow
+Write-Host "-- Computer: $env:COMPUTERNAME ---" -ForegroundColor Yellow
+Write-Host "-- $(Get-Date -Format 'MM/dd/yyyy hh:mm tt') ---" -ForegroundColor Yellow
+Write-Host $border -ForegroundColor DarkBlue
 Write-Host ""
 
 Test-PendingReboot
