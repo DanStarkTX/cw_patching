@@ -363,7 +363,7 @@ Set-WUServices
 Install-WindowsUpdatePrerequisites
 Invoke-WindowsUpdate
 
-$border = '=' * 60
+$border = '=' * 80
 
 if ($script:PendingRebootBlocked) {
  Write-Host "Windows Update process stopped because a reboot is already pending." -ForegroundColor Yellow

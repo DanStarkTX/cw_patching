@@ -286,7 +286,7 @@ function Test-ResourceSignals {
 # ============================================================
 function Write-HealthVerdict {
     Write-Host ""
-    $border = '=' * 60
+    $border = '=' * 80
     Write-Host $border -ForegroundColor Cyan
 
     if ($script:Errors.Count -gt 0) {

@@ -293,7 +293,7 @@ try {
  }
  }
 
- $border = '=' * 60
+ $border = '=' * 80
  Write-Host $border -ForegroundColor Cyan
  Write-Host "-- Cleanup is Finished ---" -ForegroundColor Green
  Write-Host "-- Services sealed, tasks removed ---" -ForegroundColor Green
