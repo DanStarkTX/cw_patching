@@ -69,9 +69,17 @@ $script:PendingRebootBlocked = $false
 
 Init-EventLog -EventSource $EventSource -LogName $LogName
 Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Information -EventId 1001 -Message "Windows Update script started."
-Write-Host "Windows Update script started..." -ForegroundColor Yellow
+$border = '=' * 80
 
-Write-Host "`n=== Checking and Restoring Service Accounts ===" -ForegroundColor DarkBlue
+Write-Host ""
+Write-Host $border -ForegroundColor DarkBlue
+Write-Host "-- Windows Update Script ---" -ForegroundColor Yellow
+Write-Host $border -ForegroundColor DarkBlue
+
+Write-Host ""
+Write-Host $border -ForegroundColor DarkBlue
+Write-Host "-- Checking and Restoring Service Accounts ---" -ForegroundColor Yellow
+Write-Host $border -ForegroundColor DarkBlue
 foreach ($service in $requiredServices + $potentialServices) {
  try {
  $serviceObj = Get-SVCDetails -ServiceName $service
@@ -182,7 +190,10 @@ function Start-WUServices {
 }
 
 function Set-WUServices {
- Write-Host "`n=== Configuring Windows Update Services ===" -ForegroundColor DarkBlue
+ Write-Host ""
+ Write-Host $border -ForegroundColor DarkBlue
+ Write-Host "-- Configuring Windows Update Services ---" -ForegroundColor Yellow
+ Write-Host $border -ForegroundColor DarkBlue
  foreach ($service in $requiredServices + $potentialServices) {
  $serviceObj = Get-Service -Name $service -ErrorAction SilentlyContinue
  if (-not $serviceObj) {
@@ -193,7 +204,10 @@ function Set-WUServices {
 }
 
 function Install-WindowsUpdatePrerequisites {
- Write-Host "`n=== Installing Prerequisites ===" -ForegroundColor DarkBlue
+ Write-Host ""
+ Write-Host $border -ForegroundColor DarkBlue
+ Write-Host "-- Installing Prerequisites ---" -ForegroundColor Yellow
+ Write-Host $border -ForegroundColor DarkBlue
  Write-Host "Checking for localized or installed PSWindowsUpdate module..." -ForegroundColor Yellow
 
  $dependencyState = Import-LocalizedUpdateDependencies -ModulesRoot $ModulesRootPath
@@ -235,7 +249,10 @@ function Test-PendingReboot {
 }
 
 function Invoke-WindowsUpdate {
- Write-Host "`n=== Checking for Windows Updates ===" -ForegroundColor DarkBlue
+ Write-Host ""
+ Write-Host $border -ForegroundColor DarkBlue
+ Write-Host "-- Checking for Windows Updates ---" -ForegroundColor Yellow
+ Write-Host $border -ForegroundColor DarkBlue
  Write-Host "Checking for available updates..." -ForegroundColor Yellow
 
  if (Test-PendingReboot) {
@@ -264,8 +281,10 @@ function Invoke-WindowsUpdate {
  Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Information -EventId 1013 -Message $updateMessage
  }
 
- Write-Host "`n=== Installing Windows Updates ===" -ForegroundColor DarkBlue
- Write-Host "Installing updates..." -ForegroundColor Yellow
+ Write-Host ""
+ Write-Host $border -ForegroundColor DarkBlue
+ Write-Host "-- Installing Windows Updates ---" -ForegroundColor Yellow
+ Write-Host $border -ForegroundColor DarkBlue
 
  try {
  $script:InstalledUpdates = @(Install-WindowsUpdate -AcceptAll -IgnoreReboot -ErrorAction Stop -Verbose)
@@ -321,7 +340,10 @@ function Invoke-WindowsUpdate {
  Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Warning -EventId 1021 -Message "System reboot required after update installation."
  }
 
- Write-Host "`nSummary of Installed Updates:" -ForegroundColor DarkBlue
+ Write-Host ""
+ Write-Host $border -ForegroundColor DarkBlue
+ Write-Host "-- Summary of Installed Updates ---" -ForegroundColor Yellow
+ Write-Host $border -ForegroundColor DarkBlue
  if ($script:SuccessfulInstallHistory.Count -eq 0) {
  if ($script:InstalledUpdates.Count -gt 0 -and (Test-PendingReboot)) {
  Write-Host "Installed updates were reported, but confirmation in Get-WUHistory may not appear until after reboot." -ForegroundColor Yellow
@@ -362,8 +384,6 @@ function Invoke-WindowsUpdate {
 Set-WUServices
 Install-WindowsUpdatePrerequisites
 Invoke-WindowsUpdate
-
-$border = '=' * 80
 
 if ($script:PendingRebootBlocked) {
  Write-Host "Windows Update process stopped because a reboot is already pending." -ForegroundColor DarkYellow
