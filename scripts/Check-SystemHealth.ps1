@@ -30,7 +30,7 @@ $DismThresholdGB = 10
 function Write-Section {
     param ([string] $Title)
     Write-Host ""
-    Write-Host "=== $Title ===" -ForegroundColor DarkBlue
+    Write-Host "=== $Title ===" -ForegroundColor Cyan
 }
 
 function Add-Warning {
@@ -145,7 +145,7 @@ function Test-DiskSpace {
         $usedGB = [math]::Round($disk.Used / 1GB, 2)
         $totalGB = [math]::Round(($disk.Free + $disk.Used) / 1GB, 2)
 
-        Write-Host "Drive $systemDrive - Total: ${totalGB}GB  Used: ${usedGB}GB  Free: ${freeGB}GB" -ForegroundColor DarkBlue
+        Write-Host "Drive $systemDrive - Total: ${totalGB}GB  Used: ${usedGB}GB  Free: ${freeGB}GB" -ForegroundColor Cyan
 
         if ($freeGB -lt $DismThresholdGB) {
             Add-Warning "Free disk space is below ${DismThresholdGB}GB ($freeGB GB free). Running DISM component cleanup..."
@@ -252,7 +252,7 @@ function Test-ResourceSignals {
         $usedMemGB = [math]::Round(($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / 1MB, 2)
         $memPct = [math]::Round(($usedMemGB / $totalMemGB) * 100, 1)
 
-        Write-Host "Memory: Total ${totalMemGB}GB  Used ${usedMemGB}GB  Free ${freeMemGB}GB ($memPct% used)" -ForegroundColor DarkBlue
+        Write-Host "Memory: Total ${totalMemGB}GB  Used ${usedMemGB}GB  Free ${freeMemGB}GB ($memPct% used)" -ForegroundColor Cyan
 
         if ($memPct -gt 90) {
             Add-Warning "Memory usage is critically high ($memPct% used)."
@@ -267,7 +267,7 @@ function Test-ResourceSignals {
 
     try {
         $cpuLoad = (Get-WmiObject -Class Win32_Processor -ErrorAction Stop | Measure-Object -Property LoadPercentage -Average).Average
-        Write-Host "CPU load: $cpuLoad%" -ForegroundColor DarkBlue
+        Write-Host "CPU load: $cpuLoad%" -ForegroundColor Cyan
 
         if ($cpuLoad -gt 90) {
             Add-Warning "CPU load is critically high ($cpuLoad%). Something may be consuming the processor."
@@ -311,14 +311,14 @@ $border = '=' * 80
 function Write-Banner {
     param([string]$Text, [string]$Color = 'Yellow')
     $centered = $Text.PadLeft([Math]::Floor(($border.Length + $Text.Length) / 2)).PadRight($border.Length)
-    Write-Host $border -ForegroundColor DarkBlue
+    Write-Host $border -ForegroundColor Cyan
     Write-Host $centered -ForegroundColor $Color
-    Write-Host $border -ForegroundColor DarkBlue
+    Write-Host $border -ForegroundColor Cyan
 }
 
 Write-Banner "System Health Check"
-Write-Host "Computer : $env:COMPUTERNAME" -ForegroundColor DarkBlue
-Write-Host "Date/Time: $(Get-Date -Format 'MM/dd/yyyy hh:mm tt')" -ForegroundColor DarkBlue
+Write-Host "Computer : $env:COMPUTERNAME" -ForegroundColor Cyan
+Write-Host "Date/Time: $(Get-Date -Format 'MM/dd/yyyy hh:mm tt')" -ForegroundColor Cyan
 Write-Host ""
 
 Test-PendingReboot

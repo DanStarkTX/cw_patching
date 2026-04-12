@@ -257,9 +257,9 @@ $border = '=' * 80
 function Write-Banner {
     param([string]$Text, [string]$Color = 'Yellow')
     $centered = $Text.PadLeft([Math]::Floor(($border.Length + $Text.Length) / 2)).PadRight($border.Length)
-    Write-Host $border -ForegroundColor DarkBlue
+    Write-Host $border -ForegroundColor Cyan
     Write-Host $centered -ForegroundColor $Color
-    Write-Host $border -ForegroundColor DarkBlue
+    Write-Host $border -ForegroundColor Cyan
 }
 
 Write-Host ""
@@ -267,36 +267,36 @@ Write-Banner "Cleanup Script"
 
 try {
  Write-Host ""
- Write-Host "=== Removing Scheduled Task Folders ===" -ForegroundColor DarkBlue
+ Write-Host "=== Removing Scheduled Task Folders ===" -ForegroundColor Cyan
  Remove-TaskFolders -TaskFolders $TaskFoldersToRemove
 
  Write-Host ""
- Write-Host "=== Clearing Folders ===" -ForegroundColor DarkBlue
+ Write-Host "=== Clearing Folders ===" -ForegroundColor Cyan
  Clear-Folders -Folders $FoldersToClean
 
  Write-Host ""
- Write-Host "=== Disabling Services ===" -ForegroundColor DarkBlue
+ Write-Host "=== Disabling Services ===" -ForegroundColor Cyan
  foreach ($serviceName in $ServicesToDisable) {
  Disable-ServiceViaRegistry -ServiceName $serviceName
  $LASTEXITCODE = 0
  }
 
  Write-Host ""
- Write-Host "=== Changing Service Logon Accounts ===" -ForegroundColor DarkBlue
+ Write-Host "=== Changing Service Logon Accounts ===" -ForegroundColor Cyan
  foreach ($serviceName in $ServicesToDisable) {
  Set-ServiceLogonAccount -ServiceName $serviceName
  $LASTEXITCODE = 0
  }
 
  Write-Host ""
- Write-Host "=== Restoring Protected Services ===" -ForegroundColor DarkBlue
+ Write-Host "=== Restoring Protected Services ===" -ForegroundColor Cyan
  foreach ($serviceName in $ProtectedServices) {
  Restore-ProtectedServiceStartup -ServiceName $serviceName
  $LASTEXITCODE = 0
  }
 
  Write-Host ""
- Write-Host "=== Final Service Status ===" -ForegroundColor DarkBlue
+ Write-Host "=== Final Service Status ===" -ForegroundColor Cyan
  foreach ($serviceName in ($ServicesToDisable + $ProtectedServices)) {
  $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
  if ($service) {
