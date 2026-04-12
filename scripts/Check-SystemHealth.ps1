@@ -287,15 +287,15 @@ function Test-ResourceSignals {
 function Write-HealthVerdict {
     Write-Host ""
     if ($script:Errors.Count -gt 0) {
-        Write-Banner "-- Health Check Complete ---" "Red"
+        Write-Banner "Health Check Complete" "Red"
         Write-Host ""
         Write-Host "[NEEDS ATTENTION] $($script:Errors.Count) error(s) detected. Review output above." -ForegroundColor Red
     } elseif ($script:Warnings.Count -gt 0) {
-        Write-Banner "-- Health Check Complete ---" "DarkYellow"
+        Write-Banner "Health Check Complete" "DarkYellow"
         Write-Host ""
         Write-Host "[HEALTHY WITH WARNINGS] $($script:Warnings.Count) warning(s) detected. Review output above." -ForegroundColor DarkYellow
     } else {
-        Write-Banner "-- Health Check Complete ---"
+        Write-Banner "Health Check Complete"
         Write-Host ""
         Write-Host "[HEALTHY] No errors or warnings detected." -ForegroundColor Green
     }
@@ -316,7 +316,7 @@ function Write-Banner {
     Write-Host $border -ForegroundColor DarkBlue
 }
 
-Write-Banner "-- System Health Check ---"
+Write-Banner "System Health Check"
 Write-Host "Computer : $env:COMPUTERNAME" -ForegroundColor DarkBlue
 Write-Host "Date/Time: $(Get-Date -Format 'MM/dd/yyyy hh:mm tt')" -ForegroundColor DarkBlue
 Write-Host ""

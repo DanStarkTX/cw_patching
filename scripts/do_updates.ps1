@@ -80,7 +80,7 @@ function Write-Banner {
 }
 
 Write-Host ""
-Write-Banner "-- Windows Update Script ---"
+Write-Banner "Windows Update Script"
 
 Write-Host ""
 Write-Host "=== Checking and Restoring Service Accounts ===" -ForegroundColor DarkBlue

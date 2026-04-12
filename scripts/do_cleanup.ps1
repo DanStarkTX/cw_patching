@@ -263,7 +263,7 @@ function Write-Banner {
 }
 
 Write-Host ""
-Write-Banner "-- Cleanup Script ---"
+Write-Banner "Cleanup Script"
 
 try {
  Write-Host ""
@@ -313,7 +313,7 @@ try {
  }
 
  Write-Host ""
- Write-Banner "-- Cleanup Complete ---"
+ Write-Banner "Cleanup Complete"
  Write-Host ""
  Write-Host "[DONE] Services sealed, tasks removed." -ForegroundColor Green
  Write-Host "[ACTION] Shutdown and take your snapshot." -ForegroundColor Yellow
