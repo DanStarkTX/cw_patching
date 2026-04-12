@@ -11,9 +11,31 @@ if ($PSVersionTable.PSEdition -ne "Desktop") {
 
 $api = "https://api.github.com/repos/DanStarkTX/cw_patching/contents"
 
+$EventSource = "CWPatchingImport"
+$LogName = "Application"
+
+function Write-ImportEventLog {
+    param(
+        [string]$Message,
+        [ValidateSet('Information','Warning','Error')]
+        [string]$EntryType = 'Information',
+        [int]$EventId = 5000
+    )
+    try {
+        if (-not [System.Diagnostics.EventLog]::SourceExists($EventSource)) {
+            [System.Diagnostics.EventLog]::CreateEventSource($EventSource, $LogName)
+        }
+        $eventLog = New-Object System.Diagnostics.EventLog($LogName)
+        $eventLog.Source = $EventSource
+        $eventLog.WriteEntry($Message, [System.Diagnostics.EventLogEntryType]::$EntryType, $EventId)
+    } catch { }
+}
+
 Write-Host ""
 Write-Host "=== Cloudwave EUC Toolset Import ===" -ForegroundColor Cyan
 Write-Host ""
+
+Write-ImportEventLog -Message "Cloudwave EUC Toolset Import started on $env:COMPUTERNAME." -EventId 5000
 
 $null = cmd /c "mkdir C:\cwave 2>nul"
 $null = cmd /c "mkdir C:\cwave\scripts 2>nul"
@@ -112,6 +134,7 @@ for ($i = 0; $i -lt $total; $i++) {
         Write-Progress -Activity "Cloudwave EUC Toolset Import" -Status "Importing $fileName" -PercentComplete (($i / $total) * 100)
         if (cwSave $file.Url $file.Out) {
             $imported++
+            Write-ImportEventLog -Message "Imported: $fileName" -EventId 5001
         }
     } else {
         $skipped++
@@ -122,10 +145,13 @@ Write-Progress -Activity "Cloudwave EUC Toolset Import" -Completed
 
 Write-Host ""
 if ($skipped -gt 0) {
-    Write-Host "Import complete: $imported file(s) downloaded, $skipped already up to date." -ForegroundColor Cyan
+    $summary = "Import complete: $imported file(s) downloaded, $skipped already up to date."
 } else {
-    Write-Host "Import complete: $imported files downloaded." -ForegroundColor Cyan
+    $summary = "Import complete: $imported files downloaded."
 }
+
+Write-Host $summary -ForegroundColor Cyan
+Write-ImportEventLog -Message $summary -EventId 5002
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  Run updates:  C:\cwave\run_updates.bat" -ForegroundColor White
