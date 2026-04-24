@@ -165,7 +165,9 @@ function Start-WUServices {
  }
  }
  
- if ($service.State -ne "Running") {
+ if ($ServiceName -eq "waasmedicsvc") {
+ Write-Host "Skipping start for $($service.DisplayName) (protected by Windows from manual start)." -ForegroundColor DarkYellow
+ } elseif ($service.State -ne "Running") {
  Write-Host "Starting service: $($service.DisplayName)" -ForegroundColor Yellow
  Start-Service -Name $ServiceName -ErrorAction Stop
  if ((Get-Service -Name $ServiceName).Status -eq "Running") {
