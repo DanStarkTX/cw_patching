@@ -8,10 +8,43 @@ function Set-LogonAs {
         [string] $Account
     )
 
-    $arguments = switch ($Account) {
-        "LocalSystem" { 'obj= "LocalSystem"' }
-        "Guest"       { 'obj= ".\Guest" password= ""' }
+    $service = Get-CimInstance -Class Win32_Service -Filter "Name='$ServiceName'" -ErrorAction SilentlyContinue
+    if (-not $service) {
+        return [pscustomobject]@{
+            ServiceName = $ServiceName
+            Arguments   = "obj=$Account"
+            ExitCode    = 1
+            StdOut      = ""
+            StdErr      = "Service not found"
+            Success     = $false
+        }
     }
 
-    Invoke-ScConfig -ServiceName $ServiceName -Arguments $arguments
+    $startName = if ($Account -eq "LocalSystem") { "LocalSystem" } else { ".\Guest" }
+    $password = if ($Account -eq "LocalSystem") { $null } else { "" }
+
+    try {
+        $result = $service | Invoke-CimMethod -MethodName Change -Arguments @{
+            StartName = $startName
+            StartPassword = $password
+        }
+
+        [pscustomobject]@{
+            ServiceName = $ServiceName
+            Arguments   = "obj=$startName"
+            ExitCode    = $result.ReturnValue
+            StdOut      = "Service logon account updated"
+            StdErr      = ""
+            Success     = ($result.ReturnValue -eq 0)
+        }
+    } catch {
+        [pscustomobject]@{
+            ServiceName = $ServiceName
+            Arguments   = "obj=$startName"
+            ExitCode    = 1
+            StdOut      = ""
+            StdErr      = $_.Exception.Message
+            Success     = $false
+        }
+    }
 }
