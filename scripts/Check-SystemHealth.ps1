@@ -191,7 +191,7 @@ function Test-ServiceSanity {
                 continue
             }
 
-            $wmiSvc = Get-WmiObject -Class Win32_Service -Filter "Name='$($svc.Name)'" -ErrorAction SilentlyContinue
+            $wmiSvc = Get-CimInstance -Class Win32_Service -Filter "Name='$($svc.Name)'" -ErrorAction SilentlyContinue
             $startMode = if ($wmiSvc) { $wmiSvc.StartMode } else { "Unknown" }
 
             if ($startMode -eq $svc.ExpectedStartType) {
@@ -246,7 +246,7 @@ function Test-ResourceSignals {
     Write-Section "Check 6: Basic Resource Signals"
 
     try {
-        $os = Get-WmiObject -Class Win32_OperatingSystem -ErrorAction Stop
+        $os = Get-CimInstance -Class Win32_OperatingSystem -ErrorAction Stop
         $totalMemGB = [math]::Round($os.TotalVisibleMemorySize / 1MB, 2)
         $freeMemGB = [math]::Round($os.FreePhysicalMemory / 1MB, 2)
         $usedMemGB = [math]::Round(($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / 1MB, 2)
@@ -266,7 +266,7 @@ function Test-ResourceSignals {
     }
 
     try {
-        $cpuLoad = (Get-WmiObject -Class Win32_Processor -ErrorAction Stop | Measure-Object -Property LoadPercentage -Average).Average
+        $cpuLoad = (Get-CimInstance -Class Win32_Processor -ErrorAction Stop | Measure-Object -Property LoadPercentage -Average).Average
         Write-Host "CPU load: $cpuLoad%" -ForegroundColor White
 
         if ($cpuLoad -gt 90) {

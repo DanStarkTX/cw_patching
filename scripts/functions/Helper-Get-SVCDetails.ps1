@@ -4,5 +4,5 @@ function Get-SVCDetails {
         [string] $ServiceName
     )
 
-    Get-WmiObject -Class Win32_Service -Filter "Name='$ServiceName'" -ErrorAction SilentlyContinue
+    Get-CimInstance -Class Win32_Service -Filter "Name='$ServiceName'" -ErrorAction SilentlyContinue
 }
