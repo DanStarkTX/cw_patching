@@ -7,28 +7,18 @@ function Invoke-ScConfig {
         [string] $Arguments
     )
 
-    $psi = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName = "sc.exe"
-    $psi.Arguments = "config $ServiceName $Arguments"
-    $psi.RedirectStandardOutput = $true
-    $psi.RedirectStandardError = $true
-    $psi.UseShellExecute = $false
-    $psi.CreateNoWindow = $true
+    $output = & sc.exe config $ServiceName $Arguments 2>&1
+    $exitCode = $LASTEXITCODE
 
-    $process = New-Object System.Diagnostics.Process
-    $process.StartInfo = $psi
-    $process.Start() | Out-Null
-
-    $stdout = $process.StandardOutput.ReadToEnd()
-    $stderr = $process.StandardError.ReadToEnd()
-    $process.WaitForExit()
+    $stdout = ($output | Where-Object { $_ -is [string] }) -join "`n"
+    $stderr = ($output | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] } | ForEach-Object { $_.Exception.Message }) -join "`n"
 
     [pscustomobject]@{
         ServiceName = $ServiceName
         Arguments   = $Arguments
-        ExitCode    = $process.ExitCode
+        ExitCode    = $exitCode
         StdOut      = $stdout.Trim()
         StdErr      = $stderr.Trim()
-        Success     = ($process.ExitCode -eq 0)
+        Success     = ($exitCode -eq 0)
     }
 }
