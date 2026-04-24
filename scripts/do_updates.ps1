@@ -38,7 +38,7 @@ Changes:
 . "$PSScriptRoot\functions\Helper-Import-LocalizedUpdateDependencies.ps1"
 
 $ScriptRootPath = $PSScriptRoot
-$potentialServices = @("winmgmt", "waasmedicsvc", "UsoSvc")
+$potentialServices = @("winmgmt", "UsoSvc")
 $ConfigPath = Join-Path $ScriptRootPath "config\services.json"
 $LauncherWarningsPath = Join-Path $ScriptRootPath "config\launcher-warnings.json"
 $ModulesRootPath = Join-Path $ScriptRootPath "modules"
