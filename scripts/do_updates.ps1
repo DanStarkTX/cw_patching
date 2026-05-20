@@ -35,7 +35,7 @@ Changes:
 . "$PSScriptRoot\functions\Helper-Get-RecentWUInstallSummary.ps1"
 . "$PSScriptRoot\functions\Helper-Save-LastInstalledJson.ps1"
 . "$PSScriptRoot\functions\Helper-Get-RandomLauncherWarning.ps1"
-. "$PSScriptRoot\functions\Helper-Import-LocalizedUpdateDependencies.ps1"
+. "$PSScriptRoot\functions\Helper-Get-LocalizedUpdateDependencyPath.ps1"
 
 $ScriptRootPath = $PSScriptRoot
 $potentialServices = @("winmgmt", "waasmedicsvc", "UsoSvc")
@@ -210,28 +210,29 @@ function Install-WindowsUpdatePrerequisites {
  Write-Host "=== Installing Prerequisites ===" -ForegroundColor White
  Write-Host "Checking for localized or installed PSWindowsUpdate module..." -ForegroundColor Yellow
 
- $dependencyState = Import-LocalizedUpdateDependencies -ModulesRoot $ModulesRootPath
+ $modulePath = Get-LocalizedUpdateDependencyPath -ModulesRoot $ModulesRootPath
 
- if ($dependencyState.PSWindowsUpdateAvailable) {
- if ($dependencyState.ImportedFromLocalizedPath) {
- Write-Host "PSWindowsUpdate module imported from localized payload." -ForegroundColor Green
- Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Information -EventId 1008 -Message "PSWindowsUpdate module imported from localized payload."
- } else {
- Write-Host "PSWindowsUpdate module is already available." -ForegroundColor Green
- }
- return
- }
-
- Write-Host "Failed to load PSWindowsUpdate module." -ForegroundColor Red
- if ($dependencyState.ErrorMessage) {
- Write-Host "Error: $($dependencyState.ErrorMessage)" -ForegroundColor Red
- Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Error -EventId 1009 -Message "PSWindowsUpdate module import failed: $($dependencyState.ErrorMessage)"
- } else {
+ if (-not $modulePath.ModulePath) {
  Write-Host "PSWindowsUpdate module not found in localized payload or installed modules." -ForegroundColor Red
  Write-Host "Localize PSWindowsUpdate into C:\cwave\scripts\modules before using this workflow on restricted machines." -ForegroundColor Yellow
  Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Error -EventId 1009 -Message "PSWindowsUpdate module was not found in localized payload or installed modules."
- }
  exit 1
+ }
+
+ try {
+ Import-Module $modulePath.ModulePath -Force -ErrorAction Stop
+ if ($modulePath.Source -eq "Localized") {
+ Write-Host "PSWindowsUpdate module imported from localized payload." -ForegroundColor Green
+ Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Information -EventId 1008 -Message "PSWindowsUpdate module imported from localized payload."
+ } else {
+ Write-Host "PSWindowsUpdate module imported from installed modules." -ForegroundColor Green
+ }
+ } catch {
+ Write-Host "Failed to import PSWindowsUpdate module." -ForegroundColor Red
+ Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
+ Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Error -EventId 1009 -Message "PSWindowsUpdate module import failed: $($_.Exception.Message)"
+ exit 1
+ }
 }
 
 function Test-PendingReboot {
