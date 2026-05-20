@@ -16,7 +16,7 @@ function Import-LocalizedUpdateDependencies {
 
     if ($localizedPSWindowsUpdate) {
         try {
-            Import-Module $localizedPSWindowsUpdate.FullName -Force -ErrorAction Stop
+            Import-Module $localizedPSWindowsUpdate.FullName -Force -ExecutionPolicy Bypass -ErrorAction Stop
             $result.PSWindowsUpdateAvailable = $true
             $result.ImportedFromLocalizedPath = $true
             return $result
@@ -29,7 +29,7 @@ function Import-LocalizedUpdateDependencies {
     try {
         $existingModule = Get-Module -Name PSWindowsUpdate -ListAvailable -ErrorAction SilentlyContinue | Select-Object -First 1
         if ($existingModule) {
-            Import-Module -Name PSWindowsUpdate -Force -ErrorAction Stop
+            Import-Module -Name PSWindowsUpdate -Force -ExecutionPolicy Bypass -ErrorAction Stop
             $result.PSWindowsUpdateAvailable = $true
         } else {
             $result.ErrorMessage = "PSWindowsUpdate module not found in localized payload ($ModulesRoot) or installed modules."
