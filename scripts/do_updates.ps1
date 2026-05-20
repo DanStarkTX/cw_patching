@@ -38,7 +38,7 @@ Changes:
 . "$PSScriptRoot\functions\Helper-Import-LocalizedUpdateDependencies.ps1"
 
 $ScriptRootPath = $PSScriptRoot
-$potentialServices = @("winmgmt", "UsoSvc")
+$potentialServices = @("winmgmt", "waasmedicsvc", "UsoSvc")
 $ConfigPath = Join-Path $ScriptRootPath "config\services.json"
 $LauncherWarningsPath = Join-Path $ScriptRootPath "config\launcher-warnings.json"
 $ModulesRootPath = Join-Path $ScriptRootPath "modules"
@@ -165,9 +165,7 @@ function Start-WUServices {
  }
  }
  
- if ($ServiceName -eq "waasmedicsvc") {
- Write-Host "Skipping start for $($service.DisplayName) (protected by Windows from manual start)." -ForegroundColor DarkYellow
- } elseif ($service.State -ne "Running") {
+ if ($service.State -ne "Running") {
  Write-Host "Starting service: $($service.DisplayName)" -ForegroundColor Yellow
  Start-Service -Name $ServiceName -ErrorAction Stop
  if ((Get-Service -Name $ServiceName).Status -eq "Running") {
@@ -224,9 +222,15 @@ function Install-WindowsUpdatePrerequisites {
  return
  }
 
+ Write-Host "Failed to load PSWindowsUpdate module." -ForegroundColor Red
+ if ($dependencyState.ErrorMessage) {
+ Write-Host "Error: $($dependencyState.ErrorMessage)" -ForegroundColor Red
+ Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Error -EventId 1009 -Message "PSWindowsUpdate module import failed: $($dependencyState.ErrorMessage)"
+ } else {
  Write-Host "PSWindowsUpdate module not found in localized payload or installed modules." -ForegroundColor Red
  Write-Host "Localize PSWindowsUpdate into C:\cwave\scripts\modules before using this workflow on restricted machines." -ForegroundColor Yellow
  Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Error -EventId 1009 -Message "PSWindowsUpdate module was not found in localized payload or installed modules."
+ }
  exit 1
 }
 
