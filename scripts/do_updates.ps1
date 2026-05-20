@@ -6,23 +6,10 @@ Script for managing prerequisites and Windows Updates.
 Ensures prerequisites (NuGet provider and PSWindowsUpdate module) are installed and imported, ensures necessary services for Windows Updates are running, checks for updates, installs them, and reboots if necessary. Logs all actions and outcomes.
 
 .NOTES
-Version: 1.10
+Version: 1.11
 Author: Dan Stark
 Changes: 
-- Fixed variable scope issues.
-- Fixed reboot detection logic.
-- Removed redundant service validation.
-- Added Windows Installer and TrustedInstaller protection and restoration.
-- Removed unnecessary Explorer shell restart logic.
-- Reads protected service configuration from services.json.
-- Uses shared helper functions for logging and service configuration.
-- Corrected helper loading and shared path handling.
-- Normalizes displayed account names for operator clarity.
-- Verifies successful installs against Windows Update history before reporting success.
-- Improves post-install summary with clearer operator-facing verification details.
-- Adds reusable recent-install summary helpers.
-- Saves last confirmed install results to config\last_installed.json.
-- Improves per-update event logging for operator review.
+- Corrected Win Update Module call to handle when Customers have Execution restricted.
 #>
 
 . "$PSScriptRoot\functions\Helper-Init-EventLog.ps1"
@@ -36,6 +23,8 @@ Changes:
 . "$PSScriptRoot\functions\Helper-Save-LastInstalledJson.ps1"
 . "$PSScriptRoot\functions\Helper-Get-RandomLauncherWarning.ps1"
 . "$PSScriptRoot\functions\Helper-Get-LocalizedUpdateDependencyPath.ps1"
+
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force -ErrorAction SilentlyContinue
 
 $ScriptRootPath = $PSScriptRoot
 $potentialServices = @("winmgmt", "waasmedicsvc", "UsoSvc")
@@ -290,7 +279,7 @@ function Invoke-WindowsUpdate {
  Write-Host "=== Installing Windows Updates ===" -ForegroundColor White
 
  try {
- $script:InstalledUpdates = @(Install-WindowsUpdate -AcceptAll -IgnoreReboot -ErrorAction Stop -Verbose)
+$script:InstalledUpdates = @(Get-WindowsUpdate -AcceptAll -Install -IgnoreReboot -ErrorAction Stop -Verbose)
  } catch {
  Write-Host "Failed to install updates. Error: $($_.Exception.Message)" -ForegroundColor Red
  Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Error -EventId 1016 -Message "Failed to install updates. Error: $($_.Exception.Message)"
