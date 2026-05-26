@@ -176,10 +176,15 @@ function Start-WUServices {
  }
  }
  } catch {
- Write-Host "Critical failure: Unable to start $ServiceName. Error: $($_.Exception.Message)" -ForegroundColor Red
- Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Error -EventId 2003 -Message "Critical failure: Unable to start $ServiceName. Error: $($_.Exception.Message)"
- exit 1
- }
+        if ($protectedServices -contains $ServiceName) {
+            Write-Host "Note: protected service $ServiceName could not be hand-started (expected; OS-launched only). Continuing." -ForegroundColor Yellow
+            Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Warning -EventId 2004 -Message "Protected service $ServiceName not hand-started; continuing. ($($_.Exception.Message))"
+            return
+        }
+        Write-Host "Critical failure: Unable to start $ServiceName. Error: $($_.Exception.Message)" -ForegroundColor Red
+        Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Error -EventId 2003 -Message "Critical failure: Unable to start $ServiceName. Error: $($_.Exception.Message)"
+        exit 1
+    }
 }
 
 function Set-WUServices {
