@@ -1,7 +1,8 @@
 {
   "protectedServices": [
     "msiserver",
-    "TrustedInstaller"
+    "TrustedInstaller",
+    "WaaSMedicSvc"
   ],
   "servicesToDisable": [
     "wuauserv",
