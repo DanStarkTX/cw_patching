@@ -6,7 +6,6 @@
   ],
   "servicesToDisable": [
     "wuauserv",
-    "WaaSMedicSvc",
     "UsoSvc",
     "BITS",
     "XblAuthManager",
