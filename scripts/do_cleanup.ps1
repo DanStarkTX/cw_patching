@@ -3,7 +3,7 @@
 Performs system cleanup tasks such as disabling services, cleaning folders, and removing tasks.
 
 .NOTES
-Version: 1.09
+Version: 1.10
 Author: Dan Stark
 #>
 
@@ -27,7 +27,7 @@ if ($PSVersionTable.PSEdition -ne "Desktop") {
 . "$ScriptRootPath\functions\Helper-Init-EventLog.ps1"
 . "$ScriptRootPath\functions\Helper-Write-EventLog.ps1"
 . "$ScriptRootPath\functions\Helper-Get-SVCDetails.ps1"
-. "$ScriptRootPath\functions\Helper-Invoke-ScConfig.ps1"
+. "$ScriptRootPath\functions\Helper-Format-SvcReturnCode.ps1"
 . "$ScriptRootPath\functions\Helper-Set-SvcStartupType.ps1"
 . "$ScriptRootPath\functions\Helper-Set-LogonAs.ps1"
 . "$ScriptRootPath\functions\Helper-Format-AccountName.ps1"
@@ -91,15 +91,15 @@ function Restore-ProtectedServiceStartup {
 
         if ($service.StartMode -ne "Manual") {
             Write-Host "Setting $ServiceName startup type to Manual..." -ForegroundColor Yellow
-            Set-SvcStartupType -ServiceName $ServiceName -StartupType Manual | Out-Null
+            $result = Set-SvcStartupType -ServiceName $ServiceName -StartupType Manual
 
             $updatedService = Get-SVCDetails -ServiceName $ServiceName
             if ($updatedService -and $updatedService.StartMode -eq "Manual") {
                 Write-Host "$ServiceName startup type set to Manual." -ForegroundColor Green
             }
             else {
-                Write-Host "Failed to confirm Manual startup type for $ServiceName." -ForegroundColor Red
-                Write-ErrorLog -Message "Failed to confirm Manual startup type for $ServiceName."
+                Write-Host "Failed to confirm Manual startup type for $ServiceName. Return code $($result.ExitCode): $($result.Message)" -ForegroundColor Red
+                Write-ErrorLog -Message "Failed to confirm Manual startup type for $ServiceName. Return code $($result.ExitCode): $($result.Message)"
             }
         }
         else {
@@ -137,16 +137,12 @@ function Set-ServiceLogonAccount {
  
         $result = Set-LogonAs -ServiceName $ServiceName -Account Guest
  
-        Write-Host "sc.exe output: $($result.StdOut)" -ForegroundColor Gray
-        if ($result.StdErr) { Write-Host "sc.exe error: $($result.StdErr)" -ForegroundColor Gray }
-        Write-Host "Exit code: $($result.ExitCode)" -ForegroundColor Gray
- 
-        if ($result.ExitCode -eq 0) {
+        if ($result.Success) {
             Write-Host "$ServiceName logon account changed to .\Guest." -ForegroundColor Green
         }
         else {
-            Write-Host "Failed to change logon account for $ServiceName. Exit code: $($result.ExitCode)" -ForegroundColor Red
-            Write-ErrorLog -Message "Failed to change logon account for $ServiceName. Exit code: $($result.ExitCode), Output: $($result.StdOut)"
+            Write-Host "Failed to change logon account for $ServiceName. Return code $($result.ExitCode): $($result.Message)" -ForegroundColor Red
+            Write-ErrorLog -Message "Failed to change logon account for $ServiceName. Return code $($result.ExitCode): $($result.Message)"
         }
     }
     catch {

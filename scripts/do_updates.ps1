@@ -3,17 +3,19 @@
 Script for managing prerequisites and Windows Updates.
 
 .DESCRIPTION
-Ensures prerequisites (NuGet provider and PSWindowsUpdate module) are installed and imported, ensures necessary services for Windows Updates are running, checks for updates, installs them, and reboots if necessary. Logs all actions and outcomes.
+Restores and starts the services Windows Update requires, imports the localized PSWindowsUpdate module, scans for updates, installs them, and confirms the result against Windows Update history. 
+Never reboots on its own; reports when a reboot is required. 
+Logs all actions and outcomes to the Application event log (Windows Event Viewer).
 
 .NOTES
-Version: 1.12
+Version: 1.14
 Author: Dan Stark
 #>
 
 . "$PSScriptRoot\functions\Helper-Init-EventLog.ps1"
 . "$PSScriptRoot\functions\Helper-Write-EventLog.ps1"
 . "$PSScriptRoot\functions\Helper-Get-SVCDetails.ps1"
-. "$PSScriptRoot\functions\Helper-Invoke-ScConfig.ps1"
+. "$PSScriptRoot\functions\Helper-Format-SvcReturnCode.ps1"
 . "$PSScriptRoot\functions\Helper-Set-SvcStartupType.ps1"
 . "$PSScriptRoot\functions\Helper-Set-LogonAs.ps1"
 . "$PSScriptRoot\functions\Helper-Format-AccountName.ps1"
@@ -91,8 +93,8 @@ foreach ($service in $requiredServices + $potentialServices) {
                 Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Information -EventId 1019 -Message "Service '$($serviceObj.DisplayName)' logon account restored to Local System."
             }
             else {
-                Write-Host " Failed to restore service account. Exit code: $($result.ExitCode)" -ForegroundColor Red
-                Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Error -EventId 1020 -Message "Failed to restore service '$($serviceObj.DisplayName)' to Local System. Exit code: $($result.ExitCode)"
+                Write-Host " Failed to restore service account. Exit code: $($result.ExitCode) ($($result.Message))" -ForegroundColor Red
+                Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Error -EventId 1020 -Message "Failed to restore service '$($serviceObj.DisplayName)' to Local System. Exit code: $($result.ExitCode) - $($result.Message)"
             }
             $LASTEXITCODE = 0
         }
@@ -173,8 +175,8 @@ function Start-WUServices {
                 else {
                     Set-SvcStartupType -ServiceName $ServiceName -StartupType Automatic | Out-Null
                 }
-                net.exe stop $ServiceName
-                net.exe start $ServiceName
+                Stop-Service -Name $ServiceName -Force -ErrorAction SilentlyContinue
+                Start-Service -Name $ServiceName -ErrorAction SilentlyContinue
                 if ((Get-Service -Name $ServiceName).Status -eq "Running") {
                     Write-Host "Service $($service.DisplayName) reset and started successfully." -ForegroundColor Green
                 }

@@ -1,4 +1,18 @@
 function Set-SvcStartupType {
+    <#
+    .SYNOPSIS
+    Sets a service startup type to Automatic, Manual, or Disabled.
+
+    .DESCRIPTION
+    Uses the Win32_Service ChangeStartMode method.
+
+    ChangeStartMode cannot express delayed autostart. If a service ever needs
+    "Automatic (Delayed Start)", set the DelayedAutostart DWORD under
+    HKLM\SYSTEM\CurrentControlSet\Services\<name> after setting Automatic here.
+
+    Returns a result object rather than throwing. ExitCode carries the raw
+    Win32_Service return value and Message carries its decoded meaning.
+    #>
     param (
         [Parameter(Mandatory = $true)]
         [string] $ServiceName,
@@ -8,12 +22,15 @@ function Set-SvcStartupType {
         [string] $StartupType
     )
 
-    $service = Get-CimInstance -Class Win32_Service -Filter "Name='$ServiceName'" -ErrorAction SilentlyContinue
+    $escapedName = $ServiceName -replace "'", "''"
+    $service = Get-CimInstance -Class Win32_Service -Filter "Name='$escapedName'" -ErrorAction SilentlyContinue
+
     if (-not $service) {
         return [pscustomobject]@{
             ServiceName = $ServiceName
             Arguments   = "start=$StartupType"
             ExitCode    = 1
+            Message     = "Service not found"
             StdOut      = ""
             StdErr      = "Service not found"
             Success     = $false
@@ -31,19 +48,24 @@ function Set-SvcStartupType {
             StartMode = $startMode
         }
 
+        $message = Format-SvcReturnCode -ReturnValue $result.ReturnValue
+
         [pscustomobject]@{
             ServiceName = $ServiceName
             Arguments   = "start=$startMode"
             ExitCode    = $result.ReturnValue
-            StdOut      = "Service startup type updated"
-            StdErr      = ""
+            Message     = $message
+            StdOut      = if ($result.ReturnValue -eq 0) { "Service startup type updated" } else { "" }
+            StdErr      = if ($result.ReturnValue -eq 0) { "" } else { $message }
             Success     = ($result.ReturnValue -eq 0)
         }
-    } catch {
+    }
+    catch {
         [pscustomobject]@{
             ServiceName = $ServiceName
             Arguments   = "start=$startMode"
             ExitCode    = 1
+            Message     = $_.Exception.Message
             StdOut      = ""
             StdErr      = $_.Exception.Message
             Success     = $false
