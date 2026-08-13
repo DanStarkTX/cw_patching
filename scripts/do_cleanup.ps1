@@ -3,19 +3,8 @@
 Performs system cleanup tasks such as disabling services, cleaning folders, and removing tasks.
 
 .NOTES
-Version: 1.08
+Version: 1.09
 Author: Dan Stark
-Changes: 
-- Added setting Services to Log on as Guest.
-- Added scheduled task removal.
-- Added improved validation and reporting.
-- Cleaned up comments for Brevity and Clarity.
-- Added protection for Windows Installer service (msiserver).
-- Added protection for Windows Modules Installer service (TrustedInstaller).
-- Enforces Manual startup type for protected servicing services.
-- Reads service configuration from services.json.
-- Uses shared helper functions.
-- Normalizes displayed account names for operator clarity.
 #>
 
 param (

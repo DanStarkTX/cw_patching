@@ -6,10 +6,8 @@ Script for managing prerequisites and Windows Updates.
 Ensures prerequisites (NuGet provider and PSWindowsUpdate module) are installed and imported, ensures necessary services for Windows Updates are running, checks for updates, installs them, and reboots if necessary. Logs all actions and outcomes.
 
 .NOTES
-Version: 1.11
+Version: 1.12
 Author: Dan Stark
-Changes: 
-- Corrected Win Update Module call to handle when Customers have Execution restricted.
 #>
 
 . "$PSScriptRoot\functions\Helper-Init-EventLog.ps1"
