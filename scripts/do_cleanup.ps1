@@ -59,24 +59,6 @@ function Write-ErrorLog {
     Write-EventLog -EventSource $EventSource -LogName $LogName -EntryType Error -EventId $EventIDError -Message $Message
 }
 
-function Set-RegistryKeyOwnership {
-    param (
-        [string] $RegistryPath
-    )
-    try {
-        $key = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey($RegistryPath, $true)
-        $acl = $key.GetAccessControl()
-        $owner = [System.Security.Principal.NTAccount]"Administrators"
-        $acl.SetOwner($owner)
-        $acl.AddAccessRule((New-Object System.Security.AccessControl.RegistryAccessRule("Administrators", "FullControl", "ContainerInherit, ObjectInherit", "None", "Allow")))
-        $key.SetAccessControl($acl)
-        Write-Host "Ownership of registry key $RegistryPath has been updated." -ForegroundColor Green
-    }
-    catch {
-        Write-ErrorLog -Message "Failed to take ownership of registry key $RegistryPath. Error: $($_.Exception.Message)"
-    }
-}
-
 function Restore-ProtectedServiceStartup {
     param (
         [string] $ServiceName
@@ -151,17 +133,15 @@ function Set-ServiceLogonAccount {
     }
 }
 
-function Disable-ServiceViaRegistry {
+function Disable-Service {
     param (
         [string] $ServiceName
     )
 
     if ($ProtectedServices -contains $ServiceName) {
-        Write-Host "Skipping protected service '$ServiceName'. It must remain available." -ForegroundColor Yellow
+        Write-Host "Skipping protected service '$ServiceName'." -ForegroundColor Yellow
         return
     }
-
-    $RegistryPath = "SYSTEM\CurrentControlSet\Services\$ServiceName"
 
     $service = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
     if (-not $service) {
@@ -176,27 +156,11 @@ function Disable-ServiceViaRegistry {
             Write-Host "$ServiceName has been stopped." -ForegroundColor Green
         }
 
-        $regKey = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey($RegistryPath, $true)
-        if (-not $regKey) {
-            Set-RegistryKeyOwnership -RegistryPath $RegistryPath
-            $regKey = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey($RegistryPath, $true)
-        }
-
-        if ($regKey) {
-            $regKey.SetValue("Start", 4, [Microsoft.Win32.RegistryValueKind]::DWord)
-            $regKey.Close()
-            Write-Host "$ServiceName has been disabled via the registry." -ForegroundColor Green
-        }
-        else {
-            Write-ErrorLog -Message "Registry path for $ServiceName not found or accessible. Cannot disable the service."
-        }
-
-        Set-Service -Name $ServiceName -StartupType Disabled -ErrorAction SilentlyContinue
+        Set-Service -Name $ServiceName -StartupType Disabled -ErrorAction Stop
         Write-Host "$ServiceName has been set to Disabled." -ForegroundColor Green
-
     }
     catch {
-        Write-ErrorLog -Message "Failed to stop, disable, or set $ServiceName to Disabled. Error: $($_.Exception.Message)"
+        Write-ErrorLog -Message "Failed to stop or disable $ServiceName. Error: $($_.Exception.Message)"
     }
 }
 
@@ -273,7 +237,7 @@ try {
     Write-Host ""
     Write-Host "=== Disabling Services ===" -ForegroundColor White
     foreach ($serviceName in $ServicesToDisable) {
-        Disable-ServiceViaRegistry -ServiceName $serviceName
+        Disable-Service -ServiceName $serviceName
         $LASTEXITCODE = 0
     }
 
